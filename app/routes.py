@@ -9,6 +9,20 @@ from datetime import datetime, timedelta
 import secrets
 import requests
 
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+main_bp = Blueprint('main', __name__)
+print("Blueprint auth_bp created:", auth_bp)
+print("Blueprint main_bp created:", main_bp)
+
+@main_bp.route('/')
+def home():
+    return "Home Page"
+
+@main_bp.route('/about')
+def about():
+    return "About Page"
+
+
 auth = Blueprint('auth', __name__)
 main = Blueprint('main', __name__)
 
