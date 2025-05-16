@@ -1,0 +1,5 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Welcome to the Game, {{ current_user.username }}!</h1>
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Logout</a>
+{% endblock content %}
