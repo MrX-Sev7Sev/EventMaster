@@ -51,7 +51,15 @@ class User(db.Model):
 # Создаем таблицы при первом запуске
 with app.app_context():
     db.create_all()
-
+    
+@app.after_request
+def add_mime_types(response):
+    if response.content_type == 'application/octet-stream':
+        # Исправляем MIME-тип для .jsx
+        if request.path.endswith('.jsx'):
+            response.content_type = 'text/javascript'
+    return response
+    
 # Правильная отдача JS-файлов с заголовком Content-Type
 @app.route('/static/js/<path:filename>')
 def serve_js(filename):
