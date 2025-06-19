@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Вход</title>
+</head>
+<body>
+    <h1>Вход</h1>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" action="{{ url_for('login') }}">
+        <div>
+            <label for="username">Логин:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div>
+            <input type="checkbox" id="remember" name="remember">
+            <label for="remember">Запомнить меня</label>
+        </div>
+        <button type="submit">Войти</button>
+    </form>
+    
+    <div>
+        <a href="{{ url_for('forgot_password') }}">Забыли пароль?</a>
+    </div>
+    
+    <div>
+        <p>Еще нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>
+    </div>
+    
+    <div>
+        <a href="{{ url_for('login_mail') }}">Войти с учетной записью Mail</a>
+    </div>
+</body>
+</html>
