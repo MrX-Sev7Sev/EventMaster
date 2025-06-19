@@ -52,9 +52,9 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
     
-@app.route('/api/data')
+@app.route('/api/data', methods=['GET'])  # Явно указываем методы
 def get_data():
-    return {"message": "Данные с бэкенда!"}
+    return jsonify({"message": "Данные успешно получены!"})
 
 @app.after_request
 def add_mime_types(response):
