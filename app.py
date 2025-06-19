@@ -14,7 +14,7 @@ CORS(
             "origins": [
                 "https://table-games.netlify.app",  # Продакшен-домен
             ],
-            "methods": ["GET", "POST", "PUT", "DELETE"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": True  # Если нужны куки/токены
         }
