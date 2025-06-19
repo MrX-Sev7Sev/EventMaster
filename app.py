@@ -166,5 +166,9 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('home'))
 
+@app.route('/')  
+def example():
+    return "Hello World"
+
 if __name__ == '__main__':
     app.run(debug=True)
