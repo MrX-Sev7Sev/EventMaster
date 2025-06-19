@@ -52,6 +52,10 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
     
+@app.route('/api/data')
+def get_data():
+    return {"message": "Данные с бэкенда!"}
+
 @app.after_request
 def add_mime_types(response):
     if response.content_type == 'application/octet-stream':
