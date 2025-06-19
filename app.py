@@ -11,12 +11,10 @@ CORS(
     app,
     resources={
         r"/api/*": {
-            "origins": [
-                "https://table-games.netlify.app",  # Продакшен-домен
-            ],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "origins": ["http://localhost:5173", "https://table-games.netlify.app/"],
+            "methods": ["GET", "POST", "OPTIONS", "DELETE"],
             "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True  # Если нужны куки/токены
+            "supports_credentials": True
         }
     }
 )
@@ -52,13 +50,11 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
     
-@app.route('/api/data')
+@app.route('/api/data', methods=['GET', 'OPTIONS'])
 def get_data():
-    try:
-        data = {"message": "Hello, world!"}
-        return jsonify(data), 200  # Успешный ответ
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500  # Ошибка сервера
+    if request.method == 'OPTIONS':
+        return jsonify({"status": "ok"}), 200
+    return jsonify({"message": "Данные успешно получены!"})
 
 @app.after_request
 def add_mime_types(response):
