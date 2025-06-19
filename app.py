@@ -7,7 +7,19 @@ from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "https://table-games.netlify.app"}})
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": [
+                "https://table-games.netlify.app",  # Продакшен-домен
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True  # Если нужны куки/токены
+        }
+    }
+)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
