@@ -52,7 +52,15 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
 
+# Правильная отдача JS-файлов с заголовком Content-Type
+@app.route('/static/js/<path:filename>')
+def serve_js(filename):
+    return send_from_directory('static/js', filename, mimetype='text/javascript')
 
+# Для модулей (если используется type="module")
+@app.route('/static/js/modules/<path:filename>')
+def serve_js_module(filename):
+    return send_from_directory('static/js/modules', filename, mimetype='application/javascript')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
