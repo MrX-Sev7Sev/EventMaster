@@ -12,7 +12,7 @@ class Config:
         raise ValueError("SECRET_KEY не задан в переменных окружения!")
 
     # Настройки БД (приоритет: DATABASE_URL > индивидуальные переменные)
-    DATABASE_URL = os.getenv('DATABASE_URL')
+    DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a.oregon-postgres.render.com/urfutable')
     
     if DATABASE_URL:
         # Если есть DATABASE_URL, используем его
