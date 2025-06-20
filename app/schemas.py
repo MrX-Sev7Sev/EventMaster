@@ -15,10 +15,9 @@ class UserCreate(UserBase):
             raise ValueError('Username must be alphanumeric')
         return v
 
-class UserSchema(BaseModel):
+# Основной класс User для работы в приложении
+class User(UserBase):
     id: int
-    username: str
-    email: EmailStr
     is_active: bool = True
     avatar: Optional[str] = None
     created_at: datetime
@@ -28,13 +27,17 @@ class UserSchema(BaseModel):
         json_schema_extra = {
             "example": {
                 "id": 1,
-                "username": "john_doe",
                 "email": "user@example.com",
+                "username": "john_doe",
                 "is_active": True,
                 "avatar": "https://example.com/avatar.jpg",
                 "created_at": "2024-01-01T00:00:00"
             }
         }
+
+# Для сериализации (если нужно отдельно)
+class UserSchema(User):
+    pass
 
 class GameBase(BaseModel):
     title: str = Field(..., min_length=3, max_length=100)
