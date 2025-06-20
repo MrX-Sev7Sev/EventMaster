@@ -30,13 +30,16 @@ def create_app():
     login_manager.init_app(app)
     mail.init_app(app)
     
-    # 3. Настройка Flask-Login
+    # 3. Регистрация Blueprints (перенесено выше других настроек)
+    register_blueprints(app)
+    
+    # 4. Настройка Flask-Login (после регистрации blueprints)
     @login_manager.user_loader
     def load_user(user_id):
-        from .models import User  # Ленивый импорт для избежания циклических зависимостей
+        from .models import User  # Ленивый импорт
         return User.query.get(int(user_id))
     
-    # 4. JWT коллбэки
+    # 5. JWT коллбэки
     @jwt.user_identity_loader
     def user_identity_lookup(user):
         return user.id
@@ -47,9 +50,6 @@ def create_app():
         identity = jwt_data["sub"]
         return User.query.filter_by(id=identity).one_or_none()
     
-    # 5. Регистрация Blueprints (ленивые импорты)
-    register_blueprints(app)
-    
     # 6. Создание таблиц БД
     with app.app_context():
         db.create_all()
@@ -58,9 +58,10 @@ def create_app():
 
 def register_blueprints(app):
     """Регистрация всех Blueprint в приложении"""
-    from .routes.auth import bp as auth_bp
-    from .routes.games import bp as games_bp
-    from .routes.users import bp as users_bp
+    # Ленивые импорты внутри функции
+    from app.routes.auth import bp as auth_bp
+    from app.routes.games import bp as games_bp
+    from app.routes.users import bp as users_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(games_bp)
