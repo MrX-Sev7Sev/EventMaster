@@ -38,7 +38,7 @@ class Config:
         'pool_pre_ping': True,
         'pool_recycle': 300,
     }
-
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', SECRET_KEY)
     # Настройки Mail.ru OAuth
     MAIL_OAUTH = {
         'CLIENT_ID': os.getenv('MAIL_CLIENT_ID', '890ea7b9c21d4fe98aeccd1a457dc9fc'),  # Из .env
