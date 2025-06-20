@@ -32,6 +32,7 @@ def create_app():
     mail.init_app(app)
     
     # 3. Регистрация Blueprints (перенесено выше других настроек)
+    from app.routes import register_blueprints   
     register_blueprints(app)
     
     # 4. Настройка Flask-Login (после регистрации blueprints)
