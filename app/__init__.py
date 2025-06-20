@@ -7,6 +7,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask import Blueprint
 import os
 
 # Инициализация расширений (без привязки к app)
