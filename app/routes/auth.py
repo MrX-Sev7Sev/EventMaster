@@ -66,39 +66,29 @@ def signup():
         db.session.rollback()
         raise InvalidAPIUsage(str(e), 500)
 
-@auth_bp.route('/login', methods=['GET','POST'])
+@auth_bp.route('/login', methods=['POST'])
+@cross_origin()
 def login():
-    """Аутентификация пользователя"""
-    if request.method == 'GET':
-        return jsonify({"message": "Use POST to log in"}), 200
     try:
-        # Валидация входных данных
-        data = validate_request(request, {
-            'email': {'type': 'string', 'required': True},
-            'password': {'type': 'string', 'required': True}
-        })
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Требуется JSON данные"}), 400
 
-        user = User.query.filter_by(email=data['email']).first()
+        # Добавьте логирование для диагностики
+        print("Полученные данные:", data)
         
-        if not user or not check_password_hash(user.password_hash, data['password']):
-            raise InvalidAPIUsage("Invalid email or password", 401)
+        email = data.get("email")
+        password = data.get("password")
         
-        # Создание токенов
-        access_token = create_access_token(
-            identity=user.id,
-            expires_delta=timedelta(minutes=30)
-        )
-        refresh_token = create_refresh_token(
-            identity=user.id,
-            expires_delta=timedelta(days=7)
-        )
-        
-        return jsonify({
-            "message": "Login successful",
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user": UserSchema().dump(user)
-        }), 200
+        if not email or not password:
+            return jsonify({"error": "Email и пароль обязательны"}), 400
+
+        # ... ваш код аутентификации ...
+
+    except Exception as e:
+        # Логируем ошибку
+        print("Ошибка в /login:", str(e))
+        return jsonify({"error": "Internal Server Error"}), 500
 
     except Exception as e:
         raise InvalidAPIUsage(str(e), 500)
