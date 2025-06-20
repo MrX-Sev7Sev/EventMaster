@@ -19,7 +19,8 @@ mail = Mail()
 def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
-    
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'https://eventmaster-0w4v.onrender.com'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # 1. Загрузка конфигурации
     app.config.from_object('config.Config')
     
