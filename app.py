@@ -1,3 +1,4 @@
+from app import app
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from functools import wraps
 from flask_cors import CORS
