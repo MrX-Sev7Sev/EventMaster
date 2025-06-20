@@ -46,7 +46,7 @@ class GameBase(BaseModel):
 class GameCreate(GameBase):
     pass
 
-class Game(GameBase):
+class GameSchema(GameBase):
     id: int
     owner_id: int
     created_at: datetime
