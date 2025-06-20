@@ -58,8 +58,6 @@ def create_app(config=None):
     # Создание таблиц БД (для первого запуска)
     with app.app_context():
         db.create_all()
-    
-    return app
 
 def register_blueprints(app):
     """Регистрация всех Blueprint"""
@@ -68,6 +66,7 @@ def register_blueprints(app):
     from app.routes.games import games_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
-app = create_app()
     app.register_blueprint(users_bp, url_prefix='/api/users')
     app.register_blueprint(games_bp, url_prefix='/api/games')
+    return app
+app = create_app()
