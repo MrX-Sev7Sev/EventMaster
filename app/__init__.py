@@ -15,7 +15,9 @@ cors = CORS()
 jwt = JWTManager()
 login_manager = LoginManager()
 mail = Mail()
-
+@main_bp.route('/')
+def home():
+    return "Welcome to EventMaster API", 200
 def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
@@ -61,10 +63,12 @@ def create_app():
 def register_blueprints(app):
     """Регистрация всех Blueprint в приложении"""
     # Ленивые импорты внутри функции
+    
     from app.routes.auth import auth_bp
     from app.routes.games import games_bp
     from app.routes.users import users_bp
-    
+
+    app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(games_bp)
     app.register_blueprint(users_bp)
