@@ -77,10 +77,12 @@ def register_blueprints(app):
     """Регистрация всех Blueprint в приложении"""
     # Ленивые импорты внутри функции
     
+    from .routes.data import data_bp
     from app.routes.auth import auth_bp
     from app.routes.games import games_bp
     from app.routes.users import users_bp
-
+    
+    app.register_blueprint(data_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(games_bp)
