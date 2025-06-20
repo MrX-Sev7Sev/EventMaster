@@ -26,6 +26,17 @@ def home():
 def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": [
+                "https://table-games.netlify.app",
+                "http://localhost:5173"  # Для разработки
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE"],
+            "allow_headers": ["Content-Type", "Authorization"]
+        }
+    })
+    
     @app.route('/')  # ← Это главное!
     def hello():
         return "Hello World (экстренная проверка)"
