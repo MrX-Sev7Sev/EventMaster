@@ -23,7 +23,7 @@ Flask-JWT-Extended==4.5.2  # JWT-токены
 PyJWT==2.8.0
 passlib==1.7.4
 bcrypt==4.0.1
-itsdangerous==2.1.2  # Для сессий и подписей
+itsdangerous==2.2.0  # Для сессий и подписей
 fastapi==0.103.1
 uvicorn==0.23.2
 python-multipart==0.0.6
