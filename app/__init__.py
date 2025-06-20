@@ -2,6 +2,7 @@ from gevent import monkey
 monkey.patch_all()
 
 from flask import Flask
+from .extensions import db, jwt
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
@@ -46,17 +47,13 @@ def create_app():
     # Создание таблиц БД (для первого запуска)
     with app.app_context():
         db.create_all()
-        
+    
+    # Регистрация blueprint (импортируем в последний момент)
+    from .routes.auth import auth_bp
+    from .routes.games import games_bp
+    
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(games_bp)
+    
     return app
-    
-def register_blueprints(app):
-    """Регистрация всех Blueprint"""
-    from app.routes.auth import auth_bp
-    from app.routes.users import users_bp
-    from app.routes.games import games_bp
-    
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(users_bp, url_prefix='/api/users')
-    app.register_blueprint(games_bp, url_prefix='/api/games')
-    
 app = create_app()
