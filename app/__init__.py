@@ -2,6 +2,11 @@ from gevent import monkey
 monkey.patch_all()  # Должно быть первой строкой
 
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from flask_login import LoginManager
+from flask_mail import Mail
 import os
 
 # Инициализация расширений (без привязки к app)
@@ -18,7 +23,7 @@ def create_app():
     # 1. Загрузка конфигурации
     app.config.from_object('config.Config')
     
-    # 2. Инициализация расширений
+    # 2. Инициализация расширений с приложением
     db.init_app(app)
     cors.init_app(app, supports_credentials=True)
     jwt.init_app(app)
@@ -28,20 +33,38 @@ def create_app():
     # 3. Настройка Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
-        from .models import User  # Ленивый импорт
+        from .models import User  # Ленивый импорт для избежания циклических зависимостей
         return User.query.get(int(user_id))
     
-    # 4. Регистрация Blueprints (ленивые импорты)
-    from .routes.auth import bp as auth_bp
-    from .routes.games import bp as games_bp
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(games_bp)
+    # 4. JWT коллбэки
+    @jwt.user_identity_loader
+    def user_identity_lookup(user):
+        return user.id
     
-    # 5. Создание таблиц БД
+    @jwt.user_lookup_loader
+    def user_lookup_callback(_jwt_header, jwt_data):
+        from .models import User
+        identity = jwt_data["sub"]
+        return User.query.filter_by(id=identity).one_or_none()
+    
+    # 5. Регистрация Blueprints (ленивые импорты)
+    register_blueprints(app)
+    
+    # 6. Создание таблиц БД
     with app.app_context():
         db.create_all()
     
     return app
+
+def register_blueprints(app):
+    """Регистрация всех Blueprint в приложении"""
+    from .routes.auth import bp as auth_bp
+    from .routes.games import bp as games_bp
+    from .routes.users import bp as users_bp
+    
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(games_bp)
+    app.register_blueprint(users_bp)
 
 # WSGI-совместимый объект
 app = create_app()
