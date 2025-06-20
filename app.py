@@ -47,7 +47,7 @@ CORS(
         }
     }
 )
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'urfu-table-ames-8%7284264240527516)128*1/52_3^`0('
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'd2Flf93!kL_42$%k2Qz1@fkEjd*daP2'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a.oregon-postgres.render.com/urfutable'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
