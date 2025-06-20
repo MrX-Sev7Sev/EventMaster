@@ -30,6 +30,10 @@ def create_app():
     def hello():
         return "Hello World (экстренная проверка)"
 
+    @app.route('/api/data')
+    def data():
+        return jsonify({"status": "OK"})
+        
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a.oregon-postgres.render.com/urfutable'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # 1. Загрузка конфигурации
