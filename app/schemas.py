@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
+from datetime import datetime
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -13,18 +14,13 @@ class UserCreate(UserBase):
         if not v.isalnum():
             raise ValueError('Username must be alphanumeric')
         return v
-        
-class UserSchema(Schema):
-    id = fields.Int(dump_only=True)
-    username = fields.Str(required=True)
-    email = fields.Email(required=True)
-    created_at = fields.DateTime(dump_only=True)
-    
+
 class User(UserBase):
     id: int
     is_active: bool = True
     avatar: Optional[str] = None
-    
+    created_at: datetime  # Добавлено!
+
     class Config:
         orm_mode = True
         json_schema_extra = {
@@ -33,7 +29,8 @@ class User(UserBase):
                 "email": "user@example.com",
                 "username": "john_doe",
                 "is_active": True,
-                "avatar": "https://example.com/avatar.jpg"
+                "avatar": "https://example.com/avatar.jpg",
+                "created_at": "2024-01-01T00:00:00"
             }
         }
 
@@ -47,7 +44,7 @@ class GameCreate(GameBase):
 class Game(GameBase):
     id: int
     owner_id: int
-    created_at: str
+    created_at: datetime  # Исправлено с str на datetime (если нужно)
     
     class Config:
         orm_mode = True
