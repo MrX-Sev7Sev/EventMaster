@@ -54,7 +54,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # CORS для фронта
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://table-games.netlify.app/"],  # URL вашего фронта
+    allow_origins=["http://localhost:5173", "https://table-games.netlify.app/"],  # URL вашего фронта
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
