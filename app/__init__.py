@@ -20,14 +20,26 @@ login_manager = LoginManager()
 mail = Mail()
 main_bp = Blueprint('main', __name__)
 
-@main_bp.route('/')
-
 def home():
     return "Welcome to EventMaster API", 200
     
 def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
+    
+    # 1. Загрузка конфигурации
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a.oregon-postgres.render.com/urfutable'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'super-secret-key')
+    app.config.from_object('config.Config')
+    # 2. Инициализация расширений с приложением
+    db.init_app(app)
+    cors.init_app(app, supports_credentials=True)
+    jwt.init_app(app)
+    login_manager.init_app(app)
+    mail.init_app(app)
+
+    # CORS с конкретными настройками    
     CORS(app, resources={
         r"/api/*": {
             "origins": [
@@ -42,18 +54,6 @@ def create_app():
     @app.route('/')  # ← Это главное!
     def hello():
         return "Hello World (экстренная проверка)"
-        
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a.oregon-postgres.render.com/urfutable'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    # 1. Загрузка конфигурации
-    app.config.from_object('config.Config')
-    
-    # 2. Инициализация расширений с приложением
-    db.init_app(app)
-    cors.init_app(app, supports_credentials=True)
-    jwt.init_app(app)
-    login_manager.init_app(app)
-    mail.init_app(app)
     
     # 3. Регистрация Blueprints (перенесено выше других настроек)
     from app.routes import register_blueprints   
@@ -92,7 +92,6 @@ def register_blueprints(app):
     from app.routes.users import users_bp
     
     app.register_blueprint(data_bp)
-    app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(games_bp)
     app.register_blueprint(users_bp)
