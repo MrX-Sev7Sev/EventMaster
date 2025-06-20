@@ -1,6 +1,6 @@
 import re
 from flask import request
-from .exceptions import InvalidAPIUsage
+from app.exceptions import InvalidAPIUsage
 
 def validate_request(req, validation_rules):
     """Валидация входящих данных"""
