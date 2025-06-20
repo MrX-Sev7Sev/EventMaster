@@ -1,30 +1,32 @@
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
-from app.models import Game
-from app.extensions import db
+from flask import Blueprint
+from flask_jwt_extended import jwt_required, current_user
+from app.models import db, Game
+from app.schemas import Game, GameCreate
+from app.utils import validate_request
+from app.exceptions import InvalidAPIUsage
 
 games_bp = Blueprint('games', __name__, url_prefix='/api/games')
 
-@games_bp.route('/games')
-def get_games():
-    games = Game.query.all()
-    return {'games': [game.to_dict() for game in games]}
-
-@games_bp.route('/', methods=['GET'])
-def get_games():
-    games = Game.query.all()
-    return jsonify([game.to_dict() for game in games]), 200
-
-@games_bp.route('/<int:game_id>', methods=['GET'])
-def get_game(game_id):
-    game = Game.query.get_or_404(game_id)
-    return jsonify(game.to_dict()), 200
-
-@games_bp.route('/<int:game_id>/join', methods=['POST'])
+@games_bp.route('/', methods=['POST'])
 @jwt_required()
-def join_game(game_id):
-    user_id = get_jwt_identity()
-    game = Game.query.get_or_404(game_id)
-    game.players.append(user_id)
-    db.session.commit()
-    return jsonify({"message": "Joined the game!"}), 200
+def create_game():
+    """Создание новой игры"""
+    try:
+        game_data = GameCreate.parse_obj(validate_request(request, {
+            'title': {'type': 'string', 'required': True, 'minlength': 3},
+            'description': {'type': 'string', 'required': False}
+        }))
+        
+        new_game = Game(
+            title=game_data.title,
+            description=game_data.description,
+            owner_id=current_user.id
+        )
+        
+        db.session.add(new_game)
+        db.session.commit()
+        
+        return Game.from_orm(new_game).json(), 201
+        
+    except ValidationError as e:
+        raise InvalidAPIUsage("Invalid game data", 400, {'errors': e.errors()})
