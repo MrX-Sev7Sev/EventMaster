@@ -48,4 +48,4 @@ class Game(GameBase):
     created_at: datetime  # Исправлено с str на datetime (если нужно)
     
     class Config:
-        orm_mode = True
+        from_attributes = True
