@@ -7,7 +7,8 @@ load_dotenv()
 class Config:
     
     # Настройки PostgreSQL (основная БД)
-    SECRET_KEY = os.getenv('d2Flf93!kL_42$%k2Qz1@fkEjd*daP2')
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-только-для-теста'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     if not SECRET_KEY:
         raise ValueError("SECRET_KEY не задан в переменных окружения!")
 
