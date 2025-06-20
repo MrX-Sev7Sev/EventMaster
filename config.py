@@ -64,5 +64,18 @@ class Config:
             raise EnvironmentError(
                 f"Отсутствуют обязательные переменные окружения: {', '.join(missing)}"
             )
+        # Проверка обязательных настроек
+    @classmethod
+    def validate_oauth(cls):
+        required = [
+            'MAIL_CLIENT_ID',
+            'MAIL_CLIENT_SECRET',
+            'MAIL_REDIRECT_URI'
+        ]
+        missing = [var for var in required if not getattr(cls, var)]
+        if missing:
+            raise ValueError(f"Missing Mail OAuth config: {', '.join(missing)}")
+
     SECRET_KEY = os.getenv('SECRET_KEY', 'urfu-table-ames-8%7284264240527516)128*1/52_3^`0(')  #
     Config.validate()
+    Config.validate_oauth()
