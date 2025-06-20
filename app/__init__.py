@@ -56,4 +56,3 @@ def create_app():
     app.register_blueprint(games_bp)
     
     return app
-app = create_app()
