@@ -12,7 +12,9 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 @auth_bp.route('/test')
 def test():
     return "Works!", 200
-    
+@auth_bp.route('/login', methods=['GET'])
+def login_test():
+    return "Сервер работает! Используйте POST для входа", 200
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
     """Регистрация нового пользователя"""
