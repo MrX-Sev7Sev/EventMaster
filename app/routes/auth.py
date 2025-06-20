@@ -7,9 +7,9 @@ from app.utils import validate_request
 from app.exceptions import InvalidAPIUsage
 from datetime import timedelta
 
-users_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
-@users_bp.route('/signup', methods=['POST'])
+@bp.route('/signup', methods=['POST'])
 def signup():
     """Регистрация нового пользователя"""
     try:
@@ -58,7 +58,7 @@ def signup():
         db.session.rollback()
         raise InvalidAPIUsage(str(e), 500)
 
-@users_bp.route('/login', methods=['POST'])
+@bp.route('/login', methods=['POST'])
 def login():
     """Аутентификация пользователя"""
     try:
