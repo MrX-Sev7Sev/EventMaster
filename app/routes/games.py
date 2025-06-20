@@ -6,9 +6,9 @@ from app.schemas import GameSchema, GameCreate
 from app.utils import validate_request
 from app.exceptions import InvalidAPIUsage
 
-bp = Blueprint('games', __name__, url_prefix='/api/games')
+games_bp = Blueprint('games', __name__, url_prefix='/api/games')
 
-@bp.route('/', methods=['POST'])
+@games_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_game():
     """Создание новой игры"""
