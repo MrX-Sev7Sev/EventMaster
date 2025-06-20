@@ -64,9 +64,11 @@ def signup():
         db.session.rollback()
         raise InvalidAPIUsage(str(e), 500)
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['GET','POST'])
 def login():
     """Аутентификация пользователя"""
+    if request.method == 'GET':
+        return jsonify({"message": "Use POST to log in"}), 200
     try:
         # Валидация входных данных
         data = validate_request(request, {
