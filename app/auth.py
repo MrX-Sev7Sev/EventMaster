@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 
-SECRET_KEY = "your-secret-key"
+SECRET_KEY = "d2Flf93!kL_42$%k2Qz1@fkEjd*daP2"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
