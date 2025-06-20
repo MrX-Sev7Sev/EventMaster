@@ -20,7 +20,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-
+from app import db
+from app.models import User
+from sqlalchemy.exc import SQLAlchemyError
 import models, schemas, crud
 from database import SessionLocal, engine
 from auth import create_access_token, get_current_user
@@ -87,6 +89,27 @@ class UserToken(db.Model):
 with app.app_context():
     db.create_all()
     
+@app.route('/api/users/check/<string:email>', methods=['GET'])
+def check_email(email):
+    try:
+        # Проверка через ORM
+        user_exists = db.session.query(User.email).filter_by(email=email).first() is not None
+        
+        # Или альтернативный вариант:
+        # user = User.query.filter_by(email=email).first()
+        # user_exists = user is not None
+        
+        return jsonify({
+            'exists': user_exists,
+            'email': email
+        })
+    
+    except SQLAlchemyError as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'database_error'
+        }), 500
+        
 @app.get("/")
 def read_root():
     return {"message": "Добро пожаловать в клуб настольных игр!"}
