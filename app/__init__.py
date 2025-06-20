@@ -20,16 +20,16 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 
-@app.route('/')  # ← Это главное!
-def hello():
-    return "Hello World (экстренная проверка)"
-
 def home():
     return "Welcome to EventMaster API", 200
     
 def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
+    @app.route('/')  # ← Это главное!
+    def hello():
+        return "Hello World (экстренная проверка)"
+
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a.oregon-postgres.render.com/urfutable'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # 1. Загрузка конфигурации
