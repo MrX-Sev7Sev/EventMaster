@@ -59,9 +59,9 @@ def create_app():
 def register_blueprints(app):
     """Регистрация всех Blueprint в приложении"""
     # Ленивые импорты внутри функции
-    from app.routes.auth import bp as auth_bp
-    from app.routes.games import bp as games_bp
-    from app.routes.users import bp as users_bp
+    from app.routes.auth import auth_bp
+    from app.routes.games import games_bp
+    from app.routes.users import users_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(games_bp)
