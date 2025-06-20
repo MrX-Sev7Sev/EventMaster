@@ -30,8 +30,8 @@ CORS(
         }
     }
 )
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SECRET_KEY'] = 'urfu-table-ames-8%7284264240527516)128*1/52_3^`0('
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@host:port/dbname'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -88,155 +88,54 @@ def serve_js(filename):
 def serve_js_module(filename):
     return send_from_directory('static/js/modules', filename, mimetype='application/javascript')
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/api/register', methods=['POST'])  # Явно указываем /api/ для API
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+    
+    data = request.get_json()
+    
+    # Валидация обязательных полей
+    required_fields = ['username', 'email', 'password']
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    username = data['username']
+    email = data['email']
+    password = data['password']
+    
+    # Проверка существования пользователя
+    if User.query.filter_by(username=username).first():
+        return jsonify({"error": "Username already exists"}), 409
         
-        if User.query.filter_by(username=username).first():
-            flash('Имя пользователя уже занято')
-            return redirect(url_for('register'))
-        
-        if User.query.filter_by(email=email).first():
-            flash('Email уже используется')
-            return redirect(url_for('register'))
-        
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Email already in use"}), 409
+    
+    # Создание пользователя
+    try:
         new_user = User(username=username, email=email)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
         
-        flash('Регистрация успешна. Теперь вы можете войти.')
-        return redirect(url_for('login'))
-    
-    return render_template('register.html')
-
-@app.route('/forgot_password', methods=['GET', 'POST'])
-def forgot_password():
-    if request.method == 'POST':
-        email = request.form['email']
-        user = User.query.filter_by(email=email).first()
+        # Возвращаем созданного пользователя (без пароля)
+        return jsonify({
+            "id": new_user.id,
+            "username": new_user.username,
+            "email": new_user.email
+        }), 201
         
-        if user:
-            token = serializer.dumps(email, salt='password-reset-salt')
-            reset_url = url_for('reset_password', token=token, _external=True)
-            
-            msg = Message('Сброс пароля',
-                          recipients=[email])
-            msg.body = f'Для сброса пароля перейдите по ссылке: {reset_url}'
-            mail.send(msg)
-            
-            flash('Инструкции по сбросу пароля отправлены на ваш email')
-            return redirect(url_for('login'))
-        else:
-            flash('Email не найден')
-    
-    return render_template('forgot_password.html')
-
-@app.route('/reset_password/<token>', methods=['GET', 'POST'])
-def reset_password(token):
-    try:
-        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)
-    except:
-        flash('Ссылка для сброса пароля недействительна или просрочена')
-        return redirect(url_for('forgot_password'))
-    
-    if request.method == 'POST':
-        password = request.form['password']
-        user = User.query.filter_by(email=email).first()
-        user.set_password(password)
-        db.session.commit()
-        
-        flash('Ваш пароль был успешно изменен')
-        return redirect(url_for('login'))
-    
-    return render_template('reset_password.html', token=token)
-
-@app.route('/vk-callback')
-def vk_callback():
-    """Обработка OAuth-колбэка от VK с использованием config.py"""
-    
-    # 1. Получаем код из URL
-    code = request.args.get('code')
-    if not code:
-        flash('Ошибка: код авторизации не получен', 'error')
-        return redirect(url_for('login'))
-
-    try:
-        # 2. Обмениваем код на access token (используем данные из config.py)
-        vk_response = requests.get(
-            Config.VK_OAUTH['TOKEN_URL'],
-            params={
-                'client_id': Config.VK_OAUTH['APP_ID'],
-                'client_secret': Config.VK_OAUTH['APP_SECRET'],
-                'redirect_uri': Config.VK_OAUTH['REDIRECT_URI'],
-                'code': code
-            }
-        ).json()
-
-        # 3. Проверяем наличие ошибок в ответе VK
-        if 'error' in vk_response:
-            error_msg = vk_response.get('error_description', 'Неизвестная ошибка VK')
-            flash(f'Ошибка авторизации VK: {error_msg}', 'error')
-            return redirect(url_for('login'))
-
-        # 4. Ищем или создаем пользователя в БД
-        user = User.query.filter_by(vk_id=vk_response['user_id']).first()
-        if not user:
-            # Получаем дополнительную информацию о пользователе
-            user_info = requests.get(
-                Config.VK_OAUTH['API_URL'] + 'users.get',
-                params={
-                    'user_ids': vk_response['user_id'],
-                    'access_token': vk_response['access_token'],
-                    'fields': 'photo_200,domain',
-                    'v': '5.131'
-                }
-            ).json()
-            
-            user_data = user_info['response'][0]
-            user = User(
-                vk_id=vk_response['user_id'],
-                username=user_data.get('domain'),
-                full_name=f"{user_data.get('first_name')} {user_data.get('last_name')}",
-                avatar=user_data.get('photo_200')
-            )
-            db.session.add(user)
-            db.session.commit()
-
-        # 5. Сохраняем токен
-        token = UserToken(
-            user_id=user.id,
-            access_token=vk_response['access_token'],
-            expires_at=datetime.utcnow() + timedelta(seconds=vk_response['expires_in']),
-            refresh_token=vk_response.get('refresh_token')
-        )
-        db.session.add(token)
-        db.session.commit()
-
-        # 6. Логиним пользователя
-        login_user(user)
-        flash('Вы успешно вошли через VK!', 'success')
-
     except Exception as e:
-        flash(f'Ошибка авторизации: {str(e)}', 'error')
-        return redirect(url_for('login'))
-
-    return redirect(url_for('home'))
-    
-@app.route('/login/mail')
-def login_mail():
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+  
+@app.route('/api/auth/mail', methods=['GET'])
+def start_mail_oauth():
     """
-    Перенаправление на страницу авторизации Mail.ru
-    с использованием параметров из config.py
+    Возвращает URL для OAuth-авторизации Mail.ru
+    Клиент должен перенаправить пользователя на этот URL
     """
-    # Генерация state для защиты от CSRF
-    state = secrets.token_urlsafe(16)
-    session['oauth_state'] = state
-
-    # Параметры запроса из конфига
+    state = secrets.token_urlsafe(32)  # CSRF-токен
     params = {
         'response_type': 'code',
         'client_id': app.config['MAIL_CLIENT_ID'],
@@ -244,83 +143,92 @@ def login_mail():
         'scope': 'userinfo',
         'state': state
     }
-
+    
     auth_url = f"{app.config['MAIL_AUTH_URL']}?{urlencode(params)}"
-    return redirect(auth_url)
+    
+    # Возвращаем URL и state (клиент должен проверить state при callback)
+    return jsonify({
+        "auth_url": auth_url,
+        "state": state  # Клиент должен сохранить этот state
+    })
 
-@app.route('/login/mail/callback')
-def mail_callback():
+import requests
+
+@app.route('/api/auth/mail/callback', methods=['POST'])
+def handle_mail_callback():
     """
-    Обработка callback от Mail.ru с использованием конфига
+    Обработка callback от Mail.ru.
+    Клиент должен прислать код и state.
     """
-    # Проверка обязательных параметров
-    if 'code' not in request.args:
-        flash('Ошибка авторизации: не получен код', 'error')
-        return redirect(url_for('login'))
-
-    # Проверка state
-    if request.args.get('state') != session.pop('oauth_state', None):
-        flash('Ошибка безопасности: неверный state-параметр', 'error')
-        return redirect(url_for('login'))
-
+    data = request.get_json()
+    
+    # Проверка входных данных
+    if not data or 'code' not in data or 'state' not in data:
+        return jsonify({"error": "Missing code or state"}), 400
+    
+    # Проверка state (должен сравниться с тем, что получил клиент)
+    # Клиент должен передать сохранённый state
+    if data['state'] != data.get('client_state'):
+        return jsonify({"error": "Invalid state"}), 403
+    
+    # Обмен кода на токен
     try:
-        # Обмен кода на токен
         token_data = {
             'client_id': app.config['MAIL_CLIENT_ID'],
             'client_secret': app.config['MAIL_CLIENT_SECRET'],
             'grant_type': 'authorization_code',
-            'code': request.args['code'],
+            'code': data['code'],
             'redirect_uri': app.config['MAIL_REDIRECT_URI']
         }
-
-        # Получение токена
+        
         token_response = requests.post(app.config['MAIL_TOKEN_URL'], data=token_data)
         token_response.raise_for_status()
         token_info = token_response.json()
-
-        # Получение информации о пользователе
+        
+        # Получение данных пользователя
         user_response = requests.get(
             app.config['MAIL_USER_INFO_URL'],
             params={'access_token': token_info['access_token']}
         )
-        user_response.raise_for_status()
         user_info = user_response.json()
-
-        # Создание/обновление пользователя
+        
+        # Создание/обновление пользователя в БД
         user = process_mail_user(user_info)
-
-        # Логин пользователя (пример для Flask-Login)
-        login_user(user)
-        flash('Вы успешно вошли через Mail.ru!', 'success')
-        return redirect(url_for('profile'))
-
+        
+        # Возвращаем JWT-токен или данные пользователя
+        return jsonify({
+            "user_id": user.id,
+            "access_token": generate_jwt(user.id),  # Ваша реализация JWT
+            "email": user.email
+        })
+        
     except requests.exceptions.RequestException as e:
-        app.logger.error(f"Mail OAuth error: {str(e)}")
-        flash('Ошибка авторизации через Mail.ru', 'error')
-        return redirect(url_for('login'))
+        return jsonify({"error": f"OAuth error: {str(e)}"}), 500
 
 def process_mail_user(user_data):
     """
-    Обработка данных пользователя из Mail.ru
+    Создаёт или обновляет пользователя в БД.
+    Возвращает объект User.
     """
-    # Здесь должна быть ваша реализация работы с БД
     user = User.query.filter_by(mail_id=user_data.get('id')).first()
     
     if not user:
         user = User(
-            mail_id=user_data.get('id'),
+            mail_id=user_data['id'],
             email=user_data.get('email'),
-            name=user_data.get('name'),
-            avatar=user_data.get('image')
+            username=user_data.get('name'),
+            avatar_url=user_data.get('image')
         )
         db.session.add(user)
     else:
-        user.email = user_data.get('email', user.email)
-        user.avatar = user_data.get('image', user.avatar)
+        if 'email' in user_data:
+            user.email = user_data['email']
+        if 'name' in user_data:
+            user.username = user_data['name']
     
     db.session.commit()
     return user
-    
+
 @app.route('/login/mail/callback')
 def mail_callback():
     """Обработка OAuth-колбэка от Mail.ru с использованием config.py"""
