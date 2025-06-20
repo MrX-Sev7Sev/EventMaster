@@ -13,7 +13,13 @@ class UserCreate(UserBase):
         if not v.isalnum():
             raise ValueError('Username must be alphanumeric')
         return v
-
+        
+class UserSchema(Schema):
+    id = fields.Int(dump_only=True)
+    username = fields.Str(required=True)
+    email = fields.Email(required=True)
+    created_at = fields.DateTime(dump_only=True)
+    
 class User(UserBase):
     id: int
     is_active: bool = True
