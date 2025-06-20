@@ -6,9 +6,9 @@ from app.schemas import User
 from app.utils import validate_request
 from app.exceptions import InvalidAPIUsage
 
-users_bp = Blueprint('users', __name__, url_prefix='/api/users')
+bp = Blueprint('users', __name__, url_prefix='/api/users')
 
-@users_bp.route('/me', methods=['GET'])
+@bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
     """Получение данных текущего пользователя"""
@@ -18,7 +18,7 @@ def get_current_user():
     except Exception as e:
         raise InvalidAPIUsage(str(e), 500)
 
-@users_bp.route('/me', methods=['PUT'])
+@bp.route('/me', methods=['PUT'])
 @jwt_required()
 def update_user():
     """Обновление данных пользователя"""
