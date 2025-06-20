@@ -13,12 +13,12 @@ jwt = JWTManager()
 login_manager = LoginManager()
 mail = Mail()
 
-def create_app(config_class='config.Config'):
+def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
     
     # Загрузка конфигурации
-    app.config.from_object(config_class)
+    app.config.from_object('config.Config')
     
     # Инициализация расширений
     db.init_app(app)
