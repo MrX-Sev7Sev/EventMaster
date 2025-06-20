@@ -8,6 +8,7 @@ from app.exceptions import InvalidAPIUsage
 from datetime import timedelta
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+CORS(auth_bp)
 
 @auth_bp.route('/test')
 def test():
