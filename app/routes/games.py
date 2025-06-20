@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
-from .models import Game, db
-from .extensions import db
+from app.models import Game
+from app.extensions import db
 
 games_bp = Blueprint('games', __name__, url_prefix='/api/games')
 
