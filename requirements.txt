@@ -27,7 +27,6 @@ itsdangerous==2.1.2  # Для сессий и подписей
 fastapi==0.103.1
 uvicorn==0.23.2
 python-multipart==0.0.6
-python-dotenv==1.0.0  # Загрузка .env
 requests==2.31.0  # HTTP-запросы (если есть внешние API)
 python-dateutil==2.8.2  # Работа с датами
 pydantic==2.5.2  # Валидация данных (если FastAPI или отдельно)
