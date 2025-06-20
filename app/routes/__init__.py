@@ -1,4 +1,4 @@
-from .auth import auth_bp
+from app.routes.auth import auth_bp
 from .users import users_bp
 from .games import games_bp
 
