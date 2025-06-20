@@ -48,13 +48,13 @@ CORS(
     }
 )
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'urfu-table-ames-8%7284264240527516)128*1/52_3^`0('
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@host:port/dbname'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a.oregon-postgres.render.com/urfutable'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # CORS для фронта
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # URL вашего фронта
+    allow_origins=["https://table-games.netlify.app/"],  # URL вашего фронта
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
