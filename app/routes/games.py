@@ -5,6 +5,11 @@ from app.extensions import db
 
 games_bp = Blueprint('games', __name__, url_prefix='/api/games')
 
+@games_bp.route('/games')
+def get_games():
+    games = Game.query.all()
+    return {'games': [game.to_dict() for game in games]}
+
 @games_bp.route('/', methods=['GET'])
 def get_games():
     games = Game.query.all()
