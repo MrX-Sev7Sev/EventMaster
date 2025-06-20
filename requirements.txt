@@ -13,3 +13,22 @@ python-socketio==5.8.0
 setuptools==68.2.2
 wheel==0.41.3
 pip==23.3.2
+Werkzeug==2.3.7
+Jinja2==3.1.2
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9  # Для PostgreSQL (или mysqlclient для MySQL)
+alembic==1.12.0  # Для миграций (опционально)
+Flask-Login==0.6.3
+Flask-JWT-Extended==4.5.2  # JWT-токены
+PyJWT==2.8.0
+passlib==1.7.4
+bcrypt==4.0.1
+itsdangerous==2.1.2  # Для сессий и подписей
+fastapi==0.103.1
+uvicorn==0.23.2
+python-multipart==0.0.6
+python-dotenv==1.0.0  # Загрузка .env
+requests==2.31.0  # HTTP-запросы (если есть внешние API)
+python-dateutil==2.8.2  # Работа с датами
+pydantic==2.5.2  # Валидация данных (если FastAPI или отдельно)
