@@ -15,14 +15,14 @@ class UserCreate(UserBase):
             raise ValueError('Username must be alphanumeric')
         return v
 
-class User(UserBase):
+class UserSchema(BaseModel):
     id: int
     is_active: bool = True
     avatar: Optional[str] = None
     created_at: datetime  # Добавлено!
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         json_schema_extra = {
             "example": {
                 "id": 1,
