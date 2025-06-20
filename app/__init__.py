@@ -19,6 +19,11 @@ mail = Mail()
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
+
+@app.route('/')  # ← Это главное!
+def hello():
+    return "Hello World (экстренная проверка)"
+
 def home():
     return "Welcome to EventMaster API", 200
     
