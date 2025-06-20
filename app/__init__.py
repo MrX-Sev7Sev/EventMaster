@@ -18,7 +18,7 @@ def create_app(config_class='config.Config'):
     app = Flask(__name__)
     
     # Загрузка конфигурации
-    app.config.from_object(config_class)
+    app.config.from_object('config.Config')
     
     # Инициализация расширений
     db.init_app(app)
