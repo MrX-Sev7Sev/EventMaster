@@ -110,7 +110,105 @@ def check_email(email):
             'error': str(e),
             'status': 'database_error'
         }), 500
-        
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    
+    user = users_db.get(email)
+    if not user or user['password'] != password:
+        return jsonify({"error": "Invalid credentials"}), 401
+    
+    return jsonify({
+        "id": user['id'],
+        "email": user['email'],
+        "name": user['name']
+    })
+
+@app.route('/api/users/<user_id>', methods=['GET'])
+def get_user(user_id):
+    user = next((u for u in users_db.values() if u['id'] == user_id), None)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    return jsonify({
+        "id": user['id'],
+        "email": user['email'],
+        "name": user['name'],
+        "avatar": user.get('avatar', '')
+    })
+
+@app.route('/api/users/check/<email>', methods=['GET'])
+def check_user(email):
+    exists = email in users_db
+    return jsonify({"exists": exists})
+
+@app.route('/api/users/<user_id>', methods=['POST'])
+def update_user(user_id):
+    data = request.json
+    user = next((u for u in users_db.values() if u['id'] == user_id), None)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    if 'name' in data:
+        user['name'] = data['name']
+    if 'avatar' in data:
+        user['avatar'] = data['avatar']
+    
+    return jsonify({"status": "updated"})
+@app.route('/api/games', methods=['GET'])
+def get_games():
+    return jsonify({"games": games_db})
+
+@app.route('/api/games', methods=['POST'])
+def create_game():
+    game = request.json
+    game['id'] = str(len(games_db) + 1)
+    game['players'] = [game['creator_id']]  # Создатель автоматически присоединяется
+    games_db.append(game)
+    return jsonify({"id": game['id']}), 201
+
+@app.route('/api/games/<game_id>', methods=['DELETE'])
+def delete_game(game_id):
+    global games_db
+    games_db = [g for g in games_db if g['id'] != game_id]
+    return jsonify({"status": "deleted"})
+
+@app.route('/api/games/<game_id>', methods=['PUT'])
+def update_game(game_id):
+    data = request.json
+    game = next((g for g in games_db if g['id'] == game_id), None)
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+    
+    game.update(data)
+    return jsonify({"status": "updated"})
+
+@app.route('/api/games/<game_id>/join', methods=['POST'])
+def join_game(game_id):
+    user_id = request.json.get('user_id')
+    game = next((g for g in games_db if g['id'] == game_id), None)
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+    
+    if user_id not in game['players']:
+        game['players'].append(user_id)
+    
+    return jsonify({"status": "joined"})
+
+@app.route('/api/games/<game_id>/leave', methods=['POST'])
+def leave_game(game_id):
+    user_id = request.json.get('user_id')
+    game = next((g for g in games_db if g['id'] == game_id), None)
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+    
+    if user_id in game['players']:
+        game['players'].remove(user_id)
+    
+    return jsonify({"status": "left"})
+    
 @app.get("/")
 def read_root():
     return {"message": "Добро пожаловать в клуб настольных игр!"}
@@ -177,47 +275,64 @@ def serve_js(filename):
 def serve_js_module(filename):
     return send_from_directory('static/js/modules', filename, mimetype='application/javascript')
 
-@app.route('/api/register', methods=['POST'])  # Явно указываем /api/ для API
-def register():
-    if not request.is_json:
-        return jsonify({"error": "Request must be JSON"}), 400
+### @app.route('/api/register', methods=['POST'])  # Явно указываем /api/ для API
+#def register():
+#    if not request.is_json:
+#        return jsonify({"error": "Request must be JSON"}), 400
     
-    data = request.get_json()
+#    data = request.get_json()
     
     # Валидация обязательных полей
-    required_fields = ['username', 'email', 'password']
-    if not all(field in data for field in required_fields):
-        return jsonify({"error": "Missing required fields"}), 400
+ #   required_fields = ['username', 'email', 'password']
+  #  if not all(field in data for field in required_fields):
+   #     return jsonify({"error": "Missing required fields"}), 400
     
-    username = data['username']
-    email = data['email']
-    password = data['password']
+ #   username = data['username']
+  #  email = data['email']
+   # password = data['password']
     
     # Проверка существования пользователя
-    if User.query.filter_by(username=username).first():
-        return jsonify({"error": "Username already exists"}), 409
+    #if User.query.filter_by(username=username).first():
+     #   return jsonify({"error": "Username already exists"}), 409
         
-    if User.query.filter_by(email=email).first():
-        return jsonify({"error": "Email already in use"}), 409
+    #if User.query.filter_by(email=email).first():
+     #   return jsonify({"error": "Email already in use"}), 409
     
     # Создание пользователя
-    try:
-        new_user = User(username=username, email=email)
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
+  #  try:
+    #    new_user = User(username=username, email=email)
+   #     new_user.set_password(password)
+   #    db.session.add(new_user)
+     #   db.session.commit()
         
         # Возвращаем созданного пользователя (без пароля)
-        return jsonify({
-            "id": new_user.id,
-            "username": new_user.username,
-            "email": new_user.email
-        }), 201
+     #   return jsonify({
+      #      "id": new_user.id,
+      #      "username": new_user.username,
+       #     "email": new_user.email
+      #  }), 201
         
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-  
+  #  except Exception as e:
+    #    db.session.rollback()
+    #    return jsonify({"error": str(e)}), 500###
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.json
+    email = data.get('email')
+    
+    if email in users_db:
+        return jsonify({"error": "User already exists"}), 400
+    
+    user_id = str(len(users_db) + 1)
+    users_db[email] = {
+        "id": user_id,
+        "email": email,
+        "password": data.get('password'),  # В реальном проекте хешируйте пароль!
+        "name": data.get('name', ''),
+        "avatar": data.get('avatar', '')
+    }
+    
+    return jsonify({"id": user_id}), 201
 @app.route('/api/auth/mail', methods=['GET'])
 def start_mail_oauth():
     """
