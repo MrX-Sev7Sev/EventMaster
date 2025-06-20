@@ -2,31 +2,16 @@ name: Deploy to Render
 
 on:
   push:
-    branches: [ "main" ]  # Триггер на пуш в ветку main
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4  # Клонирует репозиторий
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      
+      - name: Trigger Render Deploy
+        uses: render-actions/render-deploy@v1
         with:
-          python-version: "3.10"  # Версия Python
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: Run migrations (если есть)
-        env:
-          DATABASE_URL: ${{ secrets.RENDER_DB_URL }}  # Секрет из GitHub
-        run: |
-          flask db upgrade  # Для Flask-Migrate
-
-      - name: Notify Render
-      - uses: render-actions/render-deploy@v1
-        with:
-          service-id: ${{ secrets.RENDER_SERVICE_ID }}  # ID сервиса на Render
-          api-key: ${{ secrets.RENDER_API_KEY }}  # API-ключ Render
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
