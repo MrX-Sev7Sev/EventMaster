@@ -7,7 +7,7 @@ load_dotenv()
 class Config:
     
     # Настройки PostgreSQL (основная БД)
-    SECRET_KEY = os.getenv('urfu-table-ames-8%7284264240527516)128*1/52_3^`0(')
+    SECRET_KEY = os.getenv('d2Flf93!kL_42$%k2Qz1@fkEjd*daP2')
     if not SECRET_KEY:
         raise ValueError("SECRET_KEY не задан в переменных окружения!")
 
