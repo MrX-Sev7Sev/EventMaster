@@ -16,7 +16,7 @@ mail = Mail()
 def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
-    
+    app.config['SECRET_KEY'] = 'd2Flf93!kL_42$%k2Qz1@fkEjd*daP2'
     # Загрузка конфигурации
     app.config.from_object('config.Config')
     
