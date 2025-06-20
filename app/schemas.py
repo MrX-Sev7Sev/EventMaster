@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
 from datetime import datetime
+from app.schemas import UserSchema as User
 
 class UserBase(BaseModel):
     email: EmailStr
