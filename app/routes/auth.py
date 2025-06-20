@@ -8,6 +8,7 @@ from app.utils import validate_request
 from app.exceptions import InvalidAPIUsage
 from datetime import timedelta
 from flask_cors import CORS
+from flask_cors import cross_origin
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 CORS(auth_bp)
