@@ -30,3 +30,6 @@ python-multipart==0.0.6
 requests==2.31.0  # HTTP-запросы (если есть внешние API)
 python-dateutil==2.8.2  # Работа с датами
 pydantic==2.5.2  # Валидация данных (если FastAPI или отдельно)
+python-jose==3.3.0
+pyjwt==2.8.0
+cryptography==42.0.2
