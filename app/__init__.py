@@ -17,26 +17,12 @@ jwt = JWTManager()
 login_manager = LoginManager()
 mail = Mail()
 
-def create_app(config=None):
+def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
     jwt.init_app(app)
     # Загрузка конфигурации
-    #app.config.from_object('config.Config')
-    if config:
-        app.config.from_object(config)
-    else:
-        # Попробуем загрузить из config.py, затем из переменных окружения
-        try:
-            app.config.from_pyfile('../config.py')
-        except:
-            app.config.from_mapping(
-                SECRET_KEY=os.environ.get('SECRET_KEY', 'fallback-secret-key'),
-                SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL'),
-                JWT_SECRET_KEY=os.environ.get('JWT_SECRET_KEY'),
-                MAIL_SERVER=os.environ.get('MAIL_SERVER'),
-                # остальные настройки...
-            )
+    app.config.from_object('config.py')
     # Инициализация модулей
     from . import auth, games  # Импорт после создания app
     app.register_blueprint(auth.bp)
@@ -60,7 +46,9 @@ def create_app(config=None):
     # Создание таблиц БД (для первого запуска)
     with app.app_context():
         db.create_all()
-
+        
+    return app
+    
 def register_blueprints(app):
     """Регистрация всех Blueprint"""
     from app.routes.auth import auth_bp
@@ -70,5 +58,5 @@ def register_blueprints(app):
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(users_bp, url_prefix='/api/users')
     app.register_blueprint(games_bp, url_prefix='/api/games')
-    return app
+    
 app = create_app()
