@@ -21,9 +21,10 @@ mail = Mail()
 def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
+    app.config.from_object('config.Config')
     jwt.init_app(app)
     # Загрузка конфигурации
-    app.config.from_object('config.Config')
+    
     # Инициализация модулей
     from . import auth, games  # Импорт после создания app
     app.register_blueprint(auth.bp)
