@@ -1,3 +1,6 @@
+from gevent import monkey
+monkey.patch_all()
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -13,13 +16,29 @@ jwt = JWTManager()
 login_manager = LoginManager()
 mail = Mail()
 
-def create_app():
+def create_app(config=None):
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'd2Flf93!kL_42$%k2Qz1@fkEjd*daP2'
     # Загрузка конфигурации
-    app.config.from_object('config.Config')
-    
+    #app.config.from_object('config.Config')
+    if config:
+        app.config.from_object(config)
+    else:
+        # Попробуем загрузить из config.py, затем из переменных окружения
+        try:
+            app.config.from_pyfile('../config.py')
+        except:
+            app.config.from_mapping(
+                SECRET_KEY=os.environ.get('SECRET_KEY', 'fallback-secret-key'),
+                SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL'),
+                JWT_SECRET_KEY=os.environ.get('JWT_SECRET_KEY'),
+                MAIL_SERVER=os.environ.get('MAIL_SERVER'),
+                # остальные настройки...
+            )
+    # Инициализация модулей
+    from . import auth, games  # Импорт после создания app
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(games.bp)
     # Инициализация расширений
     db.init_app(app)
     cors.init_app(app, supports_credentials=True)
@@ -49,5 +68,6 @@ def register_blueprints(app):
     from app.routes.games import games_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app = create_app()
     app.register_blueprint(users_bp, url_prefix='/api/users')
     app.register_blueprint(games_bp, url_prefix='/api/games')
