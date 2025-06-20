@@ -77,6 +77,6 @@ class Config:
         if missing:
             raise ValueError(f"Missing Mail OAuth config: {', '.join(missing)}")
 
-    SECRET_KEY = os.getenv('SECRET_KEY', 'urfu-table-ames-8%7284264240527516)128*1/52_3^`0(')  #
+    SECRET_KEY = os.getenv('SECRET_KEY', 'd2Flf93!kL_42$%k2Qz1@fkEjd*daP2')  #
     Config.validate()
     Config.validate_oauth()
