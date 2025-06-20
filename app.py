@@ -346,4 +346,4 @@ class UserToken(db.Model):
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=False)
+    app.run(debug=True)
