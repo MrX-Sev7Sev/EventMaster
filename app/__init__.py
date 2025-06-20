@@ -9,6 +9,8 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask import Blueprint
 import os
+from .routes.data import data_bp 
+
 
 # Инициализация расширений (без привязки к app)
 db = SQLAlchemy()
