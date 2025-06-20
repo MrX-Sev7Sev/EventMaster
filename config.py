@@ -78,5 +78,5 @@ class Config:
             raise ValueError(f"Missing Mail OAuth config: {', '.join(missing)}")
 
     SECRET_KEY = os.getenv('SECRET_KEY', 'd2Flf93!kL_42$%k2Qz1@fkEjd*daP2')  #
-    Config.validate()
-    Config.validate_oauth()
+Config.validate()
+Config.validate_oauth()
