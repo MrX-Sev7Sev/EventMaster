@@ -22,7 +22,7 @@ def create_app():
     app = Flask(__name__)
     jwt.init_app(app)
     # Загрузка конфигурации
-    app.config.from_object('config.py')
+    app.config.from_object('config.Config')
     # Инициализация модулей
     from . import auth, games  # Импорт после создания app
     app.register_blueprint(auth.bp)
