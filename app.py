@@ -47,7 +47,7 @@ CORS(
         }
     }
 )
-app.config['SECRET_KEY'] = 'urfu-table-ames-8%7284264240527516)128*1/52_3^`0('
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'urfu-table-ames-8%7284264240527516)128*1/52_3^`0('
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@host:port/dbname'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
