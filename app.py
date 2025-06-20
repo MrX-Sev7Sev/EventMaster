@@ -15,7 +15,9 @@ from config import Config
 from urllib.parse import urlencode
 import secrets
 from .models import User, UserToken 
-from flask_login import login_user 
+from flask_login import login_user
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -33,6 +35,15 @@ CORS(
 app.config['SECRET_KEY'] = 'urfu-table-ames-8%7284264240527516)128*1/52_3^`0('
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@host:port/dbname'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# CORS для фронта
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # URL вашего фронта
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 db = SQLAlchemy(app)
 mail = Mail(app)
@@ -64,6 +75,10 @@ class UserToken(db.Model):
 with app.app_context():
     db.create_all()
     
+@app.get("/")
+def read_root():
+    return {"message": "Добро пожаловать в клуб настольных игр!"}
+
 @app.route('/api/data', methods=['GET', 'OPTIONS'])
 def get_data():
     if request.method == 'OPTIONS':
