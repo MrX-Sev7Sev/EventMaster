@@ -43,7 +43,7 @@ class Config:
     # Настройки Mail.ru OAuth
     MAIL_OAUTH = {
         'CLIENT_ID': os.getenv('MAIL_CLIENT_ID', '890ea7b9c21d4fe98aeccd1a457dc9fc'),  # Из .env
-        'CLIENT_SECRET': os.getenv('MAIL_CLIENT_SERVER', '19ef2f3739f1461d9adc5894ecfc0f13'),
+        'CLIENT_SECRET': os.getenv('MAIL_CLIENT_SECRET', '19ef2f3739f1461d9adc5894ecfc0f13'),
         'REDIRECT_URI': os.getenv('MAIL_REDIRECT_URI',
                                 'https://eventmaster-0w4v.onrender.com/auth/mail/callback'),
         'AUTH_URL': 'https://oauth.mail.ru/login',
