@@ -24,6 +24,9 @@ from typing import List
 import models, schemas, crud
 from database import SessionLocal, engine
 from auth import create_access_token, get_current_user
+from app import create_app
+
+app = create_app()
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -383,4 +386,4 @@ def example():
     return "Hello World"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
