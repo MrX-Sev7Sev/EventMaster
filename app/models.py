@@ -2,6 +2,8 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from app import db
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -36,3 +38,14 @@ class UserToken(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user = db.relationship('User', backref=db.backref('tokens', lazy=True))
+class Game(db.Model):
+    __tablename__ = 'games'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Связи (если нужны)
+    owner = db.relationship('User', backref='games')
