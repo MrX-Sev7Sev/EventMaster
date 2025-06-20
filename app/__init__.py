@@ -16,9 +16,12 @@ cors = CORS()
 jwt = JWTManager()
 login_manager = LoginManager()
 mail = Mail()
+main_bp = Blueprint('main', __name__)
+
 @main_bp.route('/')
 def home():
     return "Welcome to EventMaster API", 200
+    
 def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
