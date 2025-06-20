@@ -16,9 +16,18 @@ from urllib.parse import urlencode
 import secrets
 from .models import User, UserToken 
 from flask_login import login_user
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
+from typing import List
 
+import models, schemas, crud
+from database import SessionLocal, engine
+from auth import create_access_token, get_current_user
+
+models.Base.metadata.create_all(bind=engine)
+
+app = FastAPI()
 app = Flask(__name__)
 app.config.from_object(Config)
 CORS(
@@ -84,7 +93,45 @@ def get_data():
     if request.method == 'OPTIONS':
         return jsonify({"status": "ok"}), 200
     return jsonify({"message": "Данные успешно получены!"})
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
+@app.post("/auth/register", response_model=schemas.User)
+def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return crud.create_user(db=db, user=user)
+
+@app.post("/auth/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = crud.get_user_by_email(db, email=form_data.username)
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    
+    access_token = create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/users/me", response_model=schemas.User)
+def read_users_me(current_user: schemas.User = Depends(get_current_user)):
+    return current_user
+
+@app.post("/games/", response_model=schemas.Game)
+def create_game(
+    game: schemas.GameCreate,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_user)
+):
+    return crud.create_user_game(db=db, game=game, user_id=current_user.id)
+
+@app.get("/games/", response_model=List[schemas.Game])
+def read_games(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    games = crud.get_games(db, skip=skip, limit=limit)
+    return games
 @app.after_request
 def add_mime_types(response):
     if response.content_type == 'application/octet-stream':
