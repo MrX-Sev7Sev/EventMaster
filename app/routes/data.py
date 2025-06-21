@@ -13,9 +13,33 @@ def get_data():
 @test_bp.route('/test-db')
 def test_db():
     try:
-        # Используйте text() для сырых SQL-запросов
         from sqlalchemy import text
+        from flask import current_app
+        
+        # 1. Проверяем подключение
         result = db.session.execute(text("SELECT 1")).scalar()
-        return jsonify({"db": "OK"}), 200
+        
+        # 2. Получаем список таблиц
+        tables = db.engine.table_names()
+        
+        # 3. Проверяем конфигурацию
+        return jsonify({
+            "status": "success",
+            "db_connection": "OK",
+            "tables": tables,
+            "db_config": {
+                "db_url": current_app.config['SQLALCHEMY_DATABASE_URI'],
+                "ssl_mode": current_app.config['SQLALCHEMY_ENGINE_OPTIONS']['connect_args']['sslmode']
+            }
+        }), 200
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "status": "error",
+            "error_type": type(e).__name__,
+            "details": str(e),
+            "db_config": {
+                "db_url": current_app.config.get('SQLALCHEMY_DATABASE_URI'),
+                "ssl_mode": current_app.config.get('SQLALCHEMY_ENGINE_OPTIONS', {}).get('connect_args', {}).get('sslmode')
+            }
+        }), 500
