@@ -44,7 +44,7 @@ def validate_request(req, validation_rules):
     
     return data
     
-@bp.route('/test-db')
+@utils_bp.route('/test-db')
 def test_db():
     try:
         # Проверяем подключение
