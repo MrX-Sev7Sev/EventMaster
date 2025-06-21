@@ -1,10 +1,10 @@
 import re
 from flask import request, jsonify, Blueprint
-from app.extensions import db
-from app.models import User 
-from app.exceptions import InvalidAPIUsage
+from .extensions import db
+from .models import User 
+from .exceptions import InvalidAPIUsage
 
-utils_bp = Blueprint('utils', __name__) 
+utils_bp = Blueprint('utils', __name__)
 
 def validate_request(req, validation_rules):
     """Валидация входящих данных"""
@@ -47,19 +47,14 @@ def validate_request(req, validation_rules):
 @utils_bp.route('/test-db')
 def test_db():
     try:
-        # Проверяем подключение
         db.session.execute('SELECT 1').scalar()
-        
-        # Проверяем работу моделей
-        user_count = User.query.count()
-        
-        return jsonify({
-            "status": "success",
-            "message": "Database connection works!",
-            "user_count": user_count
-        }), 200
+        return {"status": "Database OK"}, 200
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        return {"error": str(e)}, 500
+        
+def validate_request(data, required_fields):
+    """Отдельная функция, не привязанная к Blueprint"""
+    for field in required_fields:
+        if field not in data:
+            return False
+    return True
