@@ -32,6 +32,7 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'super-secret-key')
     app.config.from_object('config.Config')
     # 2. Инициализация расширений с приложением
+    from .extensions import db, login_manager
     db.init_app(app)
     cors.init_app(app, supports_credentials=True)
     jwt.init_app(app)
@@ -84,12 +85,11 @@ def create_app():
 def register_blueprints(app):
     """Регистрация всех Blueprint в приложении"""
     # Ленивые импорты внутри функции
-    
+    from .utils import utils_bp
     from .routes.data import data_bp
     from app.routes.auth import auth_bp
     from app.routes.games import games_bp
     from app.routes.users import users_bp
-    from .utils import utils_bp
     
     app.register_blueprint(utils_bp, url_prefix='/api')
     app.register_blueprint(data_bp)
