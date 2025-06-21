@@ -1,6 +1,6 @@
-from flask import current_app
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, current_app
 from app.extensions import db
+from sqlalchemy import text, inspect
 import logging
 
 data_bp = Blueprint('data', __name__, url_prefix='/api')
@@ -13,20 +13,31 @@ def get_data():
 @test_bp.route('/test-db')
 def test_db():
     try:
-        from sqlalchemy import text
-        from flask import current_app
-        
-        # 1. Проверяем подключение
+        # 1. Проверяем подключение к БД
         result = db.session.execute(text("SELECT 1")).scalar()
         
-        # 2. Получаем список таблиц
-        tables = db.engine.table_names()
+        # 2. Получаем список таблиц (совместимо с SQLAlchemy 2.0+)
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
         
-        # 3. Проверяем конфигурацию
+        # 3. Проверяем наличие обязательных таблиц
+        required_tables = {'users', 'games', 'token_blocklist'}
+        missing_tables = required_tables - set(tables)
+        
+        # 4. Проверяем количество записей в основных таблицах
+        counts = {}
+        for table in ['users', 'games']:
+            if table in tables:
+                counts[f"{table}_count"] = db.session.execute(
+                    text(f"SELECT COUNT(*) FROM {table}")
+                ).scalar()
+        
         return jsonify({
             "status": "success",
             "db_connection": "OK",
             "tables": tables,
+            "missing_tables": list(missing_tables),
+            "counts": counts,
             "db_config": {
                 "db_url": current_app.config['SQLALCHEMY_DATABASE_URI'],
                 "ssl_mode": current_app.config['SQLALCHEMY_ENGINE_OPTIONS']['connect_args']['sslmode']
