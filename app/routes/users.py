@@ -7,17 +7,26 @@ from app.schemas import User
 from app.utils import validate_request
 from app.exceptions import InvalidAPIUsage
 
+# Сначала создаем Blueprint
+users_bp = Blueprint('users', __name__)
+
+# Затем используем его
 @users_bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
-    try:
-        current_app.logger.info('Запрос данных текущего пользователя')
-        user_data = User.from_orm(current_user)
-        current_app.logger.info('Пользователь успешно загружен')
-        return user_data.json(), 200
-    except Exception as e:
-        current_app.logger.error(f'Ошибка: {str(e)}')
-        raise InvalidAPIUsage(str(e), 500)
+    from app.models import User  # Ленивый импорт чтобы избежать цикла
+    
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    return jsonify({
+        "id": user.id,
+        "email": user.email,
+        "username": user.username
+    })
 
 @users_bp.route('/me', methods=['PUT'])
 @jwt_required()
