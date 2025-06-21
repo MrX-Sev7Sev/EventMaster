@@ -7,16 +7,16 @@ from app.schemas import User
 from app.utils import validate_request
 from app.exceptions import InvalidAPIUsage
 
-users_bp = Blueprint('users', __name__, url_prefix='/api/users')
-
 @users_bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
-    """Получение данных текущего пользователя"""
     try:
+        current_app.logger.info('Запрос данных текущего пользователя')
         user_data = User.from_orm(current_user)
+        current_app.logger.info('Пользователь успешно загружен')
         return user_data.json(), 200
     except Exception as e:
+        current_app.logger.error(f'Ошибка: {str(e)}')
         raise InvalidAPIUsage(str(e), 500)
 
 @users_bp.route('/me', methods=['PUT'])
