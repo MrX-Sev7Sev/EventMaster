@@ -379,6 +379,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)    
     mail_id = db.Column(db.String(50))
     avatar_url = db.Column(db.String(200))
+    tokens = db.relationship('UserToken', backref='user', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
