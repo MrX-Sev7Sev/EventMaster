@@ -16,9 +16,26 @@ class Config:
         'pool_pre_ping': True,
         'pool_recycle': 300,
         'pool_size': 20,
-        'max_overflow': 30
+        'max_overflow': 30,
+        'connect_args': {
+            'sslmode': 'require'  # Обязательно для Render PostgreSQL
+        }
     }
-    
+    if os.getenv('DATABASE_URL'):
+        db_url = os.getenv('DATABASE_URL')
+        
+        # Конвертируем External URL в Internal URL если это Render
+        if 'render.com' in db_url:
+            # Преобразуем postgres:// в postgresql://
+            db_url = db_url.replace('postgres://', 'postgresql://')
+            
+            # Если это External URL - конвертируем в Internal
+            if '.oregon-postgres.render.com' in db_url:
+                db_url = re.sub(
+                    r'postgresql://(.+?)@(.+?)\.oregon-postgres\.render\.com',
+                    r'postgresql://\1@\2',
+                    db_url
+                )
     # Автоматическое определение DSN для БД
     if os.getenv('DATABASE_URL'):
         SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
