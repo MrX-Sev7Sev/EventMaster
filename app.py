@@ -79,10 +79,12 @@ def register_auth_routes(app):
         if not user or not user.check_password(data.get('password')):
             return jsonify({"error": "Invalid credentials"}), 401
             
+        token = generate_jwt(user.id)  # Используйте вашу функцию генерации токена
         return jsonify({
             "id": user.id,
             "email": user.email,
-            "name": user.username
+            "name": user.username,
+            "access_token": token  # Добавьте токен в ответ
         })
 
     @app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
@@ -90,13 +92,17 @@ def register_auth_routes(app):
         if request.method == 'OPTIONS':
             return jsonify(), 200
             
-        data = request.get_json()
-        if User.query.filter_by(email=data.get('email')).first():
+        data = request.get_json()  # Получаем JSON из тела запроса
+        
+        if not data or 'email' not in data or 'password' not in data:
+            return jsonify({"error": "Email and password required"}), 400
+            
+        if User.query.filter_by(email=data['email']).first():
             return jsonify({"error": "User exists"}), 400
             
         user = User(
             email=data['email'],
-            username=data.get('name', ''),
+            username=data.get('username', data['email'].split('@')[0]),
         )
         user.set_password(data['password'])
         db.session.add(user)
