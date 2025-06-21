@@ -176,22 +176,30 @@ def register_user_routes(app):
     """Регистрация маршрутов для работы с пользователями"""
     @app.route('/api/users/me', methods=['GET', 'OPTIONS'])
     def get_current_user():
+        print("Обработчик /api/users/me вызван")
         if request.method == 'OPTIONS':
             return jsonify(), 200
         
-        # Здесь должна быть логика получения текущего пользователя
-        token = request.headers.get('Authorization')
-        if not token:
-            return jsonify({"error": "Token missing"}), 401
-            
+        # Проверка заголовка Authorization
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({"error": "Authorization header missing"}), 401
+        
+        # Извлечение токена (Bearer <token>)
+        try:
+            token = auth_header.split()[1]
+        except IndexError:
+            return jsonify({"error": "Invalid token format"}), 401
+        
+        # Поиск пользователя по токену
         user = User.query.filter_by(api_token=token).first()
         if not user:
             return jsonify({"error": "Invalid token"}), 401
-            
+        
         return jsonify({
             "id": user.id,
             "email": user.email,
-            "name": user.username
+            "username": user.username
         })
 
     @app.route('/api/users/<int:user_id>', methods=['GET', 'OPTIONS'])
