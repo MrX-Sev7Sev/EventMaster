@@ -62,6 +62,8 @@ class Config:
     # ========== Настройки CORS ==========
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173,https://table-games.netlify.app').split(',')
     CORS_SUPPORTS_CREDENTIALS = True
+    CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+    CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization']
     
     # ========== Настройки почты ==========
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.mail.ru')
@@ -73,25 +75,20 @@ class Config:
     MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
     
     # ========== OAuth Mail.ru ==========
-    MAIL_OAUTH_CLIENT_ID = os.getenv('MAIL_OAUTH_CLIENT_ID', '890ea7b9c21d4fe98aeccd1a457dc9fc')
-    MAIL_OAUTH_CLIENT_SECRET = os.getenv('MAIL_OAUTH_CLIENT_SECRET', '19ef2f3739f1461d9adc5894ecfc0f13')
-    MAIL_OAUTH_REDIRECT_URI = os.getenv(
+    MAIL_CLIENT_ID = os.getenv('MAIL_OAUTH_CLIENT_ID', '890ea7b9c21d4fe98aeccd1a457dc9fc')
+    MAIL_CLIENT_SECRET = os.getenv('MAIL_OAUTH_CLIENT_SECRET', '19ef2f3739f1461d9adc5894ecfc0f13')
+    MAIL_REDIRECT_URI = os.getenv(
         'MAIL_OAUTH_REDIRECT_URI',
         'https://eventmaster-0w4v.onrender.com/auth/mail/callback'
     )
+    MAIL_AUTH_URL = 'https://oauth.mail.ru/login'
+    MAIL_TOKEN_URL = 'https://oauth.mail.ru/token'
+    MAIL_USER_INFO_URL = 'https://oauth.mail.ru/userinfo'
     
-    @property
-    def MAIL_OAUTH_CONFIG(self):
-        return {
-            'client_id': self.MAIL_OAUTH_CLIENT_ID,
-            'client_secret': self.MAIL_OAUTH_CLIENT_SECRET,
-            'redirect_uri': self.MAIL_OAUTH_REDIRECT_URI,
-            'auth_url': 'https://oauth.mail.ru/login',
-            'token_url': 'https://oauth.mail.ru/token',
-            'user_info_url': 'https://oauth.mail.ru/userinfo',
-            'scope': 'userinfo'
-        }
-
+    # ========== Настройки сериализатора ==========
+    SERIALIZER_SECRET_KEY = os.getenv('SERIALIZER_SECRET_KEY', SECRET_KEY)
+    SERIALIZER_SALT = os.getenv('SERIALIZER_SALT', 'email-confirm-salt')
+    
     # ========== Валидация конфигурации ==========
     @classmethod
     def validate(cls):
