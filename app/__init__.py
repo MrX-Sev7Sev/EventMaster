@@ -90,12 +90,14 @@ def register_blueprints(app):
     from app.routes.auth import auth_bp
     from app.routes.games import games_bp
     from app.routes.users import users_bp
+    from .routes.test import test_bp  
     
     app.register_blueprint(utils_bp, url_prefix='/api')
     app.register_blueprint(data_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(games_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(test_bp)
 
 # WSGI-совместимый объект
 app = create_app()
