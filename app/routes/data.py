@@ -13,15 +13,9 @@ def get_data():
 @test_bp.route('/test-db')
 def test_db():
     try:
-        # Простейший запрос к БД для проверки
-        result = db.session.execute("SELECT 1").scalar()
-        return jsonify({
-            "status": "success",
-            "db_connection": "OK",
-            "result": result
-        }), 200
+        # Используйте text() для сырых SQL-запросов
+        from sqlalchemy import text
+        result = db.session.execute(text("SELECT 1")).scalar()
+        return jsonify({"db": "OK"}), 200
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        return jsonify({"error": str(e)}), 500
