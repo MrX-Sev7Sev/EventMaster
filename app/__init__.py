@@ -27,8 +27,13 @@ def create_app():
     app = Flask(__name__)
     
     # 1. Загрузка конфигурации
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a.oregon-postgres.render.com/urfutable'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a/urfutable'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'connect_args': {
+            'sslmode': 'require'
+        }
+    }
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'd2еlf43!kL_42$%k42Qwgaa1@fkEjd*daP2')
     app.config.from_object('config.Config')
     # 2. Инициализация расширений с приложением
