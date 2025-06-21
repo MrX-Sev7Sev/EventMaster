@@ -5,8 +5,6 @@ from flask_login import UserMixin
 from .extensions import db
 from datetime import datetime
 
-db = SQLAlchemy()
-
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
