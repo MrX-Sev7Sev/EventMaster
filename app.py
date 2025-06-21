@@ -80,25 +80,6 @@ def create_app():
     
 def register_auth_routes(app):
     """Регистрация маршрутов аутентификации"""
-    
-    @app.route('/api/auth/login', methods=['POST', 'OPTIONS'])
-    def login():
-        if request.method == 'OPTIONS':
-            return jsonify(), 200
-            
-        data = request.get_json()
-        user = User.query.filter_by(email=data.get('email')).first()
-        
-        if not user or not user.check_password(data.get('password')):
-            return jsonify({"error": "Invalid credentials"}), 401
-            
-        token = generate_jwt(user.id)  # Используйте вашу функцию генерации токена
-        return jsonify({
-            "id": user.id,
-            "email": user.email,
-            "username": user.username,  # Добавлено
-            "access_token": token
-        })
 
     @app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
     def register():
@@ -184,36 +165,36 @@ def register_auth_routes(app):
             
         except requests.exceptions.RequestException as e:
             return jsonify({"error": f"OAuth error: {str(e)}"}), 500
+    @app.route('/api/get-test-token', methods=['GET'])
+    def get_test_token():
+        # Проверяем, существует ли уже тестовый пользователь
+        user = User.query.filter_by(email="test@example.com").first()
+        
+        if not user:
+            # Создаем нового тестового пользователя
+            user = User(
+                email="test@example.com",
+                username="test_user"
+            )
+            user.set_password("12345")
+            db.session.add(user)
+            db.session.commit()
+        
+        # Генерируем токен
+        token = generate_jwt(user.id)
+        
+        # Сохраняем токен в базе (если используете UserToken)
+        user_token = UserToken(
+            user_id=user.id,
+            api_token=token,
+            expires_at=datetime.utcnow() + timedelta(hours=1)
+        db.session.add(user_token)
+        db.session.commit()
+        
+        return jsonify({"token": token})
 
 def register_user_routes(app):
     """Регистрация маршрутов для работы с пользователями"""
-    @app.route('/api/users/me', methods=['GET', 'OPTIONS'])
-    def get_current_user():
-        print("Обработчик /api/users/me вызван")
-        if request.method == 'OPTIONS':
-            return jsonify(), 200
-        
-        # Проверка заголовка Authorization
-        auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            return jsonify({"error": "Authorization header missing"}), 401
-        
-        # Извлечение токена (Bearer <token>)
-        try:
-            token = auth_header.split()[1]
-        except IndexError:
-            return jsonify({"error": "Invalid token format"}), 401
-        
-        # Поиск пользователя по токену
-        user = User.query.filter_by(api_token=token).first()
-        if not user:
-            return jsonify({"error": "Invalid token"}), 401
-        
-        return jsonify({
-            "id": user.id,
-            "email": user.email,
-            "username": user.username
-        })
 
     @app.route('/api/users/<int:user_id>', methods=['GET', 'OPTIONS'])
     def get_user(user_id):
@@ -412,8 +393,6 @@ class UserToken(db.Model):
     access_token = db.Column(db.String(500))
     expires_at = db.Column(db.DateTime)
     refresh_token = db.Column(db.String(500))
-    user.api_token = token
-    db.session.commit()
 
 if __name__ == '__main__':
     app = create_app()
