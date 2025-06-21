@@ -1,7 +1,7 @@
 from flask import Blueprint
 from flask_jwt_extended import jwt_required, current_user
 from app.models import Game
-from app.models import db
+from app.extensions import db  # Новый импорт
 from app.schemas import GameSchema, GameCreate
 from app.utils import validate_request
 from app.exceptions import InvalidAPIUsage
