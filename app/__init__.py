@@ -89,7 +89,7 @@ def register_blueprints(app):
     from app.routes.auth import auth_bp
     from app.routes.games import games_bp
     from app.routes.users import users_bp
-    from app.routes.utils import bp as utils_bp
+    from .utils import bp as utils_bp
     
     app.register_blueprint(utils_bp, url_prefix='/api')
     app.register_blueprint(data_bp)
