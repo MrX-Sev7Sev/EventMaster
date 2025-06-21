@@ -53,13 +53,21 @@ def create_app():
     @app.route('/api/test-db')
     def test_db():
         try:
-            from sqlalchemy import text
+            from sqlalchemy import text, inspect
+            
+            # 1. Проверяем подключение
             result = db.session.execute(text("SELECT 1")).scalar()
+            
+            # 2. Получаем список таблиц (совместимый с SQLAlchemy 2.0+)
+            inspector = inspect(db.engine)
+            tables = inspector.get_table_names()
+            
             return jsonify({
                 "status": "success",
                 "db_connection": "OK",
-                "tables": db.engine.table_names()
+                "tables": tables
             }), 200
+            
         except Exception as e:
             return jsonify({
                 "status": "error",
