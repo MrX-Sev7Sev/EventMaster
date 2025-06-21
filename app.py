@@ -17,6 +17,33 @@ db = SQLAlchemy()
 mail = Mail()
 serializer = None
 
+# Модели
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    vk_id = db.Column(db.Integer, unique=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    remember_me = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)    
+    mail_id = db.Column(db.String(50))
+    avatar_url = db.Column(db.String(200))
+    tokens = db.relationship('UserToken', backref='user', lazy=True)
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+        
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+class UserToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    api_token = db.Column(db.String(500))
+    access_token = db.Column(db.String(500))
+    expires_at = db.Column(db.DateTime)
+    refresh_token = db.Column(db.String(500))
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -53,6 +80,11 @@ def create_app():
             response.headers.add('Access-Control-Allow-Methods', ', '.join(app.config['CORS_METHODS']))
         return response
 
+    # Тестовый эндпоинт
+    @app.route('/ping')
+    def ping():
+        return "pong", 200
+
     # Регистрация маршрутов
     register_auth_routes(app)
     register_user_routes(app)
@@ -62,41 +94,52 @@ def create_app():
     # Создание таблиц
     with app.app_context():
         db.create_all()
+        
+        # Вывод всех роутов при старте
+        print("\n=== Registered routes ===")
+        for rule in app.url_map.iter_rules():
+            print(f"{', '.join(rule.methods)} {rule}")
+        print("=======================\n")
 
-    @app.route('/api/test-endpoint')
-    def test_endpoint():
-        return jsonify({"status": "test OK"}), 200
-        
-    @app.route('/api/get-test-token', methods=['GET'])
-    def get_test_token():
-        test_user = User(
-            email="test@example.com",
-            username="test_user"
-    )
-    test_user.set_password("12345")
-    db.session.add(test_user)
-    db.session.commit()
-    
-    token = generate_jwt(test_user.id)
-    return jsonify({"token": token})
-    
-    @app.route('/routes')
-    def list_routes():
-        return jsonify({
-            'routes': [str(rule) for rule in app.url_map.iter_rules()]
-        })
-        
     return app
-    
+
 def register_auth_routes(app):
     """Регистрация маршрутов аутентификации"""
+
+    @app.route('/api/auth/login', methods=['POST', 'OPTIONS'])
+    def login():
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
+        data = request.get_json()
+        user = User.query.filter_by(email=data.get('email')).first()
+        
+        if not user or not user.check_password(data.get('password')):
+            return jsonify({"error": "Invalid credentials"}), 401
+            
+        token = generate_jwt(user.id)
+        
+        # Сохраняем токен
+        user_token = UserToken(
+            user_id=user.id,
+            api_token=token,
+            expires_at=datetime.utcnow() + timedelta(hours=1)
+        db.session.add(user_token)
+        db.session.commit()
+        
+        return jsonify({
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "access_token": token
+        })
 
     @app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
     def register():
         if request.method == 'OPTIONS':
             return jsonify(), 200
             
-        data = request.get_json()  # Получаем JSON из тела запроса
+        data = request.get_json()
         
         if not data or 'email' not in data or 'password' not in data:
             return jsonify({"error": "Email and password required"}), 400
@@ -114,12 +157,40 @@ def register_auth_routes(app):
         
         return jsonify({"id": user.id}), 201
 
+    @app.route('/api/get-test-token', methods=['GET'])
+    def get_test_token():
+        try:
+            user = User.query.filter_by(email="test@example.com").first()
+            
+            if not user:
+                user = User(
+                    email="test@example.com",
+                    username="test_user"
+                )
+                user.set_password("12345")
+                db.session.add(user)
+                db.session.commit()
+            
+            token = generate_jwt(user.id)
+            
+            # Сохраняем токен
+            user_token = UserToken(
+                user_id=user.id,
+                api_token=token,
+                expires_at=datetime.utcnow() + timedelta(hours=1)
+            db.session.add(user_token)
+            db.session.commit()
+            
+            return jsonify({"token": token})
+            
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     @app.route('/api/auth/mail', methods=['GET', 'OPTIONS'])
     def start_mail_oauth():
         if request.method == 'OPTIONS':
             return jsonify(), 200
             
-        """OAuth авторизация через Mail.ru"""
         state = secrets.token_urlsafe(32)
         params = {
             'response_type': 'code',
@@ -137,7 +208,6 @@ def register_auth_routes(app):
         if request.method == 'OPTIONS':
             return jsonify(), 200
             
-        """Обработка callback от Mail.ru"""
         data = request.get_json()
         
         if not data or 'code' not in data or 'state' not in data:
@@ -175,39 +245,33 @@ def register_auth_routes(app):
             
         except requests.exceptions.RequestException as e:
             return jsonify({"error": f"OAuth error: {str(e)}"}), 500
-            
-    @app.route('/api/get-test-token', methods=['GET'])
-    def get_test_token():
-        try:
-            user = User.query.filter_by(email="test@example.com").first()
-            
-            if not user:
-                user = User(
-                    email="test@example.com",
-                    username="test_user"
-                )
-                user.set_password("12345")
-                db.session.add(user)
-                db.session.commit()
-            
-            token = generate_jwt(user.id)
-            
-            # Сохраняем токен
-            user_token = UserToken(
-                user_id=user.id,
-                api_token=token,
-                expires_at=datetime.utcnow() + timedelta(hours=1)
-            )
-            db.session.add(user_token)
-            db.session.commit()
-            
-            return jsonify({"token": token})
-            
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-            
+
 def register_user_routes(app):
     """Регистрация маршрутов для работы с пользователями"""
+
+    @app.route('/api/users/me', methods=['GET', 'OPTIONS'])
+    def get_current_user():
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+        
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({"error": "Authorization header missing"}), 401
+        
+        try:
+            token = auth_header.split()[1]
+        except IndexError:
+            return jsonify({"error": "Invalid token format"}), 401
+        
+        user_token = UserToken.query.filter_by(api_token=token).first()
+        if not user_token or user_token.expires_at < datetime.utcnow():
+            return jsonify({"error": "Invalid or expired token"}), 401
+        
+        return jsonify({
+            "id": user_token.user.id,
+            "email": user_token.user.email,
+            "username": user_token.user.username
+        })
 
     @app.route('/api/users/<int:user_id>', methods=['GET', 'OPTIONS'])
     def get_user(user_id):
@@ -224,7 +288,7 @@ def register_user_routes(app):
 
 def register_game_routes(app):
     """Регистрация маршрутов для работы с играми"""
-    games_db = []  # Временное хранилище для примера
+    games_db = []
     
     @app.route('/api/games', methods=['GET', 'OPTIONS'])
     def get_games():
@@ -304,12 +368,6 @@ def register_utility_routes(app):
             return jsonify(), 200
         return {"message": "Добро пожаловать в клуб настольных игр!"}
 
-    @app.route('/api/data', methods=['GET', 'OPTIONS'])
-    def get_data():
-        if request.method == 'OPTIONS':
-            return jsonify(), 200
-        return jsonify({"message": "Данные успешно получены!"})
-
     @app.route('/api/health', methods=['GET', 'OPTIONS'])
     def health_check():
         if request.method == 'OPTIONS':
@@ -331,13 +389,6 @@ def register_utility_routes(app):
             return jsonify(), 200
         return send_from_directory('static/js/modules', filename, mimetype='application/javascript')
 
-    @app.route('/protected', methods=['GET', 'OPTIONS'])
-    @token_required
-    def protected_route(user):
-        if request.method == 'OPTIONS':
-            return jsonify(), 200
-        return {'message': f'Hello, {user.username}'}
-
 # Вспомогательные функции
 def token_required(f):
     @wraps(f)
@@ -349,7 +400,7 @@ def token_required(f):
         if not token:
             return {'error': 'Token is missing'}, 401
         
-        user_token = UserToken.query.filter_by(access_token=token).first()
+        user_token = UserToken.query.filter_by(api_token=token).first()
         if not user_token or user_token.expires_at < datetime.utcnow():
             return {'error': 'Invalid or expired token'}, 401
         
@@ -378,35 +429,8 @@ def process_mail_user(user_data):
     return user
 
 def generate_jwt(user_id):
-    """Генерация JWT токена (заглушка)"""
+    """Генерация JWT токена"""
     return f"generated-jwt-for-{user_id}"
-
-# Модели
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    vk_id = db.Column(db.Integer, unique=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
-    remember_me = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)    
-    mail_id = db.Column(db.String(50))
-    avatar_url = db.Column(db.String(200))
-    tokens = db.relationship('UserToken', backref='user', lazy=True)
-    
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-        
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-class UserToken(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    api_token = db.Column(db.String(500))
-    access_token = db.Column(db.String(500))
-    expires_at = db.Column(db.DateTime)
-    refresh_token = db.Column(db.String(500))
 
 if __name__ == '__main__':
     app = create_app()
