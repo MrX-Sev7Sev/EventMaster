@@ -9,6 +9,7 @@ from app.exceptions import InvalidAPIUsage
 from datetime import timedelta
 from flask_cors import CORS
 from flask_cors import cross_origin
+from app.utils import validate_request
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 CORS(auth_bp)
@@ -71,6 +72,8 @@ def signup():
 @auth_bp.route('/login', methods=['POST'])
 @cross_origin()
 def login():
+    if not validate_request(request.json, ['email', 'password']):
+    return {"error": "Invalid data"}, 400
     try:
         data = request.get_json()
         if not data:
