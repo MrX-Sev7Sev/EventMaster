@@ -4,7 +4,7 @@ from app.extensions import db
 from app.models import User 
 from app.exceptions import InvalidAPIUsage
 
-bp = Blueprint('utils', __name__) 
+utils_bp = Blueprint('utils', __name__) 
 
 def validate_request(req, validation_rules):
     """Валидация входящих данных"""
