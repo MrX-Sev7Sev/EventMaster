@@ -1,11 +1,11 @@
-from flask import Flask, jsonify, request, redirect, url_for, session, flash, send_from_directory
+from flask import Flask, jsonify, request, url_for, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime, timedelta
 from itsdangerous import URLSafeTimedSerializer
-from flask_mail import Mail, Message
+from flask_mail import Mail
 import secrets
 from urllib.parse import urlencode
 import requests
@@ -18,42 +18,46 @@ db = SQLAlchemy()
 mail = Mail()
 serializer = None
 
-# Временные "базы данных" для примера
-users_db = {}
-games_db = []
-
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    @app.route('/api/data')
-    def data():
-        return jsonify({"message": "Minimal working example"})
+    
     # Инициализация расширений
     db.init_app(app)
     mail.init_app(app)
     global serializer
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     
-    # Настройка CORS
+    # Настройка CORS (единая точка)
     CORS(
         app,
         resources={
             r"/api/*": {
-                "origins": ["http://localhost:5173", "https://table-games.netlify.app"],
-                "methods": ["GET", "POST", "OPTIONS", "DELETE"],
-                "allow_headers": ["Content-Type", "Authorization"],
-                "supports_credentials": True
+                "origins": app.config['CORS_ORIGINS'],
+                "supports_credentials": True,
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"]
             }
         }
     )
     
-    # Регистрация всех маршрутов
+    # Универсальный обработчик CORS
+    @app.after_request
+    def add_cors_headers(response):
+        if request.path.startswith('/api/'):
+            response.headers.add('Access-Control-Allow-Origin', ', '.join(app.config['CORS_ORIGINS']))
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        return response
+
+    # Регистрация маршрутов
     register_auth_routes(app)
     register_user_routes(app)
     register_game_routes(app)
     register_utility_routes(app)
     
-    # Создание таблиц при первом запуске
+    # Создание таблиц
     with app.app_context():
         db.create_all()
     
@@ -62,43 +66,47 @@ def create_app():
 def register_auth_routes(app):
     """Регистрация маршрутов аутентификации"""
     
-    @app.route('/api/auth/login', methods=['POST'])
+    @app.route('/api/auth/login', methods=['POST', 'OPTIONS'])
     def login():
-        data = request.json
-        email = data.get('email')
-        password = data.get('password')
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
+        data = request.get_json()
+        user = User.query.filter_by(email=data.get('email')).first()
         
-        user = users_db.get(email)
-        if not user or user['password'] != password:
+        if not user or not user.check_password(data.get('password')):
             return jsonify({"error": "Invalid credentials"}), 401
-        
+            
         return jsonify({
-            "id": user['id'],
-            "email": user['email'],
-            "name": user['name']
+            "id": user.id,
+            "email": user.email,
+            "name": user.username
         })
 
-    @app.route('/api/register', methods=['POST'])
+    @app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
     def register():
-        data = request.json
-        email = data.get('email')
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
+        data = request.get_json()
+        if User.query.filter_by(email=data.get('email')).first():
+            return jsonify({"error": "User exists"}), 400
+            
+        user = User(
+            email=data['email'],
+            username=data.get('name', ''),
+        )
+        user.set_password(data['password'])
+        db.session.add(user)
+        db.session.commit()
         
-        if email in users_db:
-            return jsonify({"error": "User already exists"}), 400
-        
-        user_id = str(len(users_db) + 1
-        users_db[email] = {
-            "id": user_id,
-            "email": email,
-            "password": data.get('password'),  # В реальном проекте нужно хешировать!
-            "name": data.get('name', ''),
-            "avatar": data.get('avatar', '')
-        }
-        
-        return jsonify({"id": user_id}), 201
+        return jsonify({"id": user.id}), 201
 
-    @app.route('/api/auth/mail', methods=['GET'])
+    @app.route('/api/auth/mail', methods=['GET', 'OPTIONS'])
     def start_mail_oauth():
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
         """OAuth авторизация через Mail.ru"""
         state = secrets.token_urlsafe(32)
         params = {
@@ -112,8 +120,11 @@ def register_auth_routes(app):
         auth_url = f"{app.config['MAIL_AUTH_URL']}?{urlencode(params)}"
         return jsonify({"auth_url": auth_url, "state": state})
 
-    @app.route('/api/auth/mail/callback', methods=['POST'])
+    @app.route('/api/auth/mail/callback', methods=['POST', 'OPTIONS'])
     def handle_mail_callback():
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
         """Обработка callback от Mail.ru"""
         data = request.get_json()
         
@@ -153,69 +164,57 @@ def register_auth_routes(app):
         except requests.exceptions.RequestException as e:
             return jsonify({"error": f"OAuth error: {str(e)}"}), 500
 
-    @app.route('/logout')
-    def logout():
-        session.pop('username', None)
-        return redirect(url_for('home'))
-
 def register_user_routes(app):
     """Регистрация маршрутов для работы с пользователями"""
     
-    @app.route('/api/users/<user_id>', methods=['GET'])
+    @app.route('/api/users/<int:user_id>', methods=['GET', 'OPTIONS'])
     def get_user(user_id):
-        user = next((u for u in users_db.values() if u['id'] == user_id), None)
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-        
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
+        user = User.query.get_or_404(user_id)
         return jsonify({
-            "id": user['id'],
-            "email": user['email'],
-            "name": user['name'],
-            "avatar": user.get('avatar', '')
+            "id": user.id,
+            "email": user.email,
+            "name": user.username,
+            "avatar": user.avatar_url if hasattr(user, 'avatar_url') else ''
         })
-
-    @app.route('/api/users/check/<email>', methods=['GET'])
-    def check_user(email):
-        exists = email in users_db
-        return jsonify({"exists": exists})
-
-    @app.route('/api/users/<user_id>', methods=['POST'])
-    def update_user(user_id):
-        data = request.json
-        user = next((u for u in users_db.values() if u['id'] == user_id), None)
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-        
-        if 'name' in data:
-            user['name'] = data['name']
-        if 'avatar' in data:
-            user['avatar'] = data['avatar']
-        
-        return jsonify({"status": "updated"})
 
 def register_game_routes(app):
     """Регистрация маршрутов для работы с играми"""
+    games_db = []  # Временное хранилище для примера
     
-    @app.route('/api/games', methods=['GET'])
+    @app.route('/api/games', methods=['GET', 'OPTIONS'])
     def get_games():
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
         return jsonify({"games": games_db})
 
-    @app.route('/api/games', methods=['POST'])
+    @app.route('/api/games', methods=['POST', 'OPTIONS'])
     def create_game():
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
         game = request.json
         game['id'] = str(len(games_db) + 1)
         game['players'] = [game['creator_id']]
         games_db.append(game)
         return jsonify({"id": game['id']}), 201
 
-    @app.route('/api/games/<game_id>', methods=['DELETE'])
+    @app.route('/api/games/<game_id>', methods=['DELETE', 'OPTIONS'])
     def delete_game(game_id):
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
         global games_db
         games_db = [g for g in games_db if g['id'] != game_id]
         return jsonify({"status": "deleted"})
 
-    @app.route('/api/games/<game_id>', methods=['PUT'])
+    @app.route('/api/games/<game_id>', methods=['PUT', 'OPTIONS'])
     def update_game(game_id):
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
         data = request.json
         game = next((g for g in games_db if g['id'] == game_id), None)
         if not game:
@@ -224,8 +223,11 @@ def register_game_routes(app):
         game.update(data)
         return jsonify({"status": "updated"})
 
-    @app.route('/api/games/<game_id>/join', methods=['POST'])
+    @app.route('/api/games/<game_id>/join', methods=['POST', 'OPTIONS'])
     def join_game(game_id):
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
         user_id = request.json.get('user_id')
         game = next((g for g in games_db if g['id'] == game_id), None)
         if not game:
@@ -236,8 +238,11 @@ def register_game_routes(app):
         
         return jsonify({"status": "joined"})
 
-    @app.route('/api/games/<game_id>/leave', methods=['POST'])
+    @app.route('/api/games/<game_id>/leave', methods=['POST', 'OPTIONS'])
     def leave_game(game_id):
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+            
         user_id = request.json.get('user_id')
         game = next((g for g in games_db if g['id'] == game_id), None)
         if not game:
@@ -251,40 +256,53 @@ def register_game_routes(app):
 def register_utility_routes(app):
     """Регистрация вспомогательных маршрутов"""
     
-    @app.route('/')
+    @app.route('/', methods=['GET', 'OPTIONS'])
     def home():
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
         return {"message": "Добро пожаловать в клуб настольных игр!"}
 
     @app.route('/api/data', methods=['GET', 'OPTIONS'])
     def get_data():
         if request.method == 'OPTIONS':
-            return jsonify({"status": "ok"}), 200
+            return jsonify(), 200
         return jsonify({"message": "Данные успешно получены!"})
 
-    @app.after_request
-    def add_mime_types(response):
-        if response.content_type == 'application/octet-stream':
-            if request.path.endswith('.jsx'):
-                response.content_type = 'text/javascript'
-        return response
+    @app.route('/api/health', methods=['GET', 'OPTIONS'])
+    def health_check():
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+        return jsonify({
+            "status": "ok", 
+            "db": "connected" if db.session.execute("SELECT 1").scalar() else "disconnected"
+        })
 
-    @app.route('/static/js/<path:filename>')
+    @app.route('/static/js/<path:filename>', methods=['GET', 'OPTIONS'])
     def serve_js(filename):
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
         return send_from_directory('static/js', filename, mimetype='text/javascript')
 
-    @app.route('/static/js/modules/<path:filename>')
+    @app.route('/static/js/modules/<path:filename>', methods=['GET', 'OPTIONS'])
     def serve_js_module(filename):
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
         return send_from_directory('static/js/modules', filename, mimetype='application/javascript')
 
-    @app.route('/protected')
+    @app.route('/protected', methods=['GET', 'OPTIONS'])
     @token_required
     def protected_route(user):
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
         return {'message': f'Hello, {user.username}'}
 
 # Вспомогательные функции
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        if request.method == 'OPTIONS':
+            return f(None, *args, **kwargs)
+            
         token = request.headers.get('Authorization')
         if not token:
             return {'error': 'Token is missing'}, 401
@@ -321,7 +339,7 @@ def generate_jwt(user_id):
     """Генерация JWT токена (заглушка)"""
     return f"generated-jwt-for-{user_id}"
 
-# Модели (лучше вынести в отдельный файл models.py)
+# Модели
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     vk_id = db.Column(db.Integer, unique=True)
