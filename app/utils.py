@@ -43,11 +43,16 @@ def validate_request(req, validation_rules):
         raise InvalidAPIUsage("Validation failed", 400, {'errors': errors})
     
     return data
+    
 @bp.route('/test-db')
 def test_db():
     try:
-        # Попытка выполнить простой запрос
-        user_count = db.session.query(User).count()
+        # Проверяем подключение
+        db.session.execute('SELECT 1').scalar()
+        
+        # Проверяем работу моделей
+        user_count = User.query.count()
+        
         return jsonify({
             "status": "success",
             "message": "Database connection works!",
