@@ -1,4 +1,5 @@
 import os
+import re  
 from datetime import timedelta
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
@@ -24,22 +25,20 @@ class Config:
     if os.getenv('DATABASE_URL'):
         db_url = os.getenv('DATABASE_URL')
         
-        # Конвертируем External URL в Internal URL если это Render
-        if 'render.com' in db_url:
-            # Преобразуем postgres:// в postgresql://
-            db_url = db_url.replace('postgres://', 'postgresql://')
-            
-            # Если это External URL - конвертируем в Internal
-            if '.oregon-postgres.render.com' in db_url:
-                db_url = re.sub(
-                    r'postgresql://(.+?)@(.+?)\.oregon-postgres\.render\.com',
-                    r'postgresql://\1@\2',
-                    db_url
-                )
-    # Автоматическое определение DSN для БД
-    if os.getenv('DATABASE_URL'):
-        SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
+        # Конвертируем postgres:// в postgresql://
+        db_url = db_url.replace('postgres://', 'postgresql://')
+        
+        # Если это Render External URL - конвертируем в Internal
+        if 'render.com' in db_url and '.oregon-postgres.render.com' in db_url:
+            db_url = re.sub(
+                r'postgresql://(.+?)@(.+?)\.oregon-postgres\.render\.com',
+                r'postgresql://\1@\2',
+                db_url
+            )
+        
+        SQLALCHEMY_DATABASE_URI = db_url
     else:
+        # Локальная конфигурация (для разработки)
         POSTGRES_USER = os.getenv('POSTGRES_USER', 'postgres')
         POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
         POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
