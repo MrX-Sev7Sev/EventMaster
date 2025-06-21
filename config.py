@@ -38,7 +38,7 @@ class Config:
         )
 
     # ========== Настройки аутентификации ==========
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'd2еlf43!kL_42$%k42Qwgaa1@fkEjd*daP2')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     JWT_TOKEN_LOCATION = ['headers', 'cookies']
