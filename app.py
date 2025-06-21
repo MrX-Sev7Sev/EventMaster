@@ -11,6 +11,11 @@ import requests
 from functools import wraps
 from config import Config
 import os
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Инициализация расширений
 db = SQLAlchemy()
@@ -48,6 +53,12 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     
+    # Настройка логирования для Render
+    if app.config['FLASK_ENV'] == 'production':
+        gunicorn_logger = logging.getLogger('gunicorn.error')
+        app.logger.handlers = gunicorn_logger.handlers
+        app.logger.setLevel(gunicorn_logger.level)
+    
     # Инициализация расширений
     db.init_app(app)
     mail.init_app(app)
@@ -80,11 +91,6 @@ def create_app():
             response.headers.add('Access-Control-Allow-Methods', ', '.join(app.config['CORS_METHODS']))
         return response
 
-    # Тестовый эндпоинт
-    @app.route('/ping')
-    def ping():
-        return "pong", 200
-
     # Регистрация маршрутов
     register_auth_routes(app)
     register_user_routes(app)
@@ -96,18 +102,25 @@ def create_app():
         db.create_all()
         
         # Вывод всех роутов при старте
-        print("\n=== Registered routes ===")
-        for rule in app.url_map.iter_rules():
-            print(f"{', '.join(rule.methods)} {rule}")
-        print("=======================\n")
-
+        app.logger.info("\n=== ЗАРЕГИСТРИРОВАННЫЕ МАРШРУТЫ ===")
+        for rule in sorted(app.url_map.iter_rules(), key=lambda r: r.rule):
+            app.logger.info(f"{', '.join(rule.methods)} {rule}")
+        app.logger.info("==================================\n")
+    
+    # Тестовый эндпоинт
+    @app.route('/api/ping')
+    def ping():
+        app.logger.info("Ping endpoint called")
+        return jsonify({"status": "ok", "message": "pong"})
+    
     return app
 
 def register_auth_routes(app):
     """Регистрация маршрутов аутентификации"""
-
+    
     @app.route('/api/auth/login', methods=['POST', 'OPTIONS'])
     def login():
+        app.logger.info(f"Login attempt: {request.json}")
         if request.method == 'OPTIONS':
             return jsonify(), 200
             
@@ -115,6 +128,7 @@ def register_auth_routes(app):
         user = User.query.filter_by(email=data.get('email')).first()
         
         if not user or not user.check_password(data.get('password')):
+            app.logger.warning(f"Invalid login attempt for {data.get('email')}")
             return jsonify({"error": "Invalid credentials"}), 401
             
         token = generate_jwt(user.id)
@@ -124,9 +138,11 @@ def register_auth_routes(app):
             user_id=user.id,
             api_token=token,
             expires_at=datetime.utcnow() + timedelta(hours=1)
+        )
         db.session.add(user_token)
         db.session.commit()
         
+        app.logger.info(f"User {user.id} logged in successfully")
         return jsonify({
             "id": user.id,
             "email": user.email,
@@ -136,6 +152,7 @@ def register_auth_routes(app):
 
     @app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
     def register():
+        app.logger.info(f"Registration attempt: {request.json}")
         if request.method == 'OPTIONS':
             return jsonify(), 200
             
@@ -155,10 +172,12 @@ def register_auth_routes(app):
         db.session.add(user)
         db.session.commit()
         
+        app.logger.info(f"New user created: {user.id}")
         return jsonify({"id": user.id}), 201
 
     @app.route('/api/get-test-token', methods=['GET'])
     def get_test_token():
+        app.logger.info("Generating test token")
         try:
             user = User.query.filter_by(email="test@example.com").first()
             
@@ -173,17 +192,19 @@ def register_auth_routes(app):
             
             token = generate_jwt(user.id)
             
-            # Сохраняем токен
             user_token = UserToken(
                 user_id=user.id,
                 api_token=token,
                 expires_at=datetime.utcnow() + timedelta(hours=1)
+            )
             db.session.add(user_token)
             db.session.commit()
             
+            app.logger.info(f"Test token generated for user {user.id}")
             return jsonify({"token": token})
             
         except Exception as e:
+            app.logger.error(f"Error generating test token: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
     @app.route('/api/auth/mail', methods=['GET', 'OPTIONS'])
@@ -191,6 +212,7 @@ def register_auth_routes(app):
         if request.method == 'OPTIONS':
             return jsonify(), 200
             
+        """OAuth авторизация через Mail.ru"""
         state = secrets.token_urlsafe(32)
         params = {
             'response_type': 'code',
@@ -208,6 +230,7 @@ def register_auth_routes(app):
         if request.method == 'OPTIONS':
             return jsonify(), 200
             
+        """Обработка callback от Mail.ru"""
         data = request.get_json()
         
         if not data or 'code' not in data or 'state' not in data:
@@ -288,7 +311,7 @@ def register_user_routes(app):
 
 def register_game_routes(app):
     """Регистрация маршрутов для работы с играми"""
-    games_db = []
+    games_db = []  # Временное хранилище для примера
     
     @app.route('/api/games', methods=['GET', 'OPTIONS'])
     def get_games():
@@ -368,6 +391,12 @@ def register_utility_routes(app):
             return jsonify(), 200
         return {"message": "Добро пожаловать в клуб настольных игр!"}
 
+    @app.route('/api/data', methods=['GET', 'OPTIONS'])
+    def get_data():
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+        return jsonify({"message": "Данные успешно получены!"})
+
     @app.route('/api/health', methods=['GET', 'OPTIONS'])
     def health_check():
         if request.method == 'OPTIONS':
@@ -389,6 +418,13 @@ def register_utility_routes(app):
             return jsonify(), 200
         return send_from_directory('static/js/modules', filename, mimetype='application/javascript')
 
+    @app.route('/protected', methods=['GET', 'OPTIONS'])
+    @token_required
+    def protected_route(user):
+        if request.method == 'OPTIONS':
+            return jsonify(), 200
+        return {'message': f'Hello, {user.username}'}
+
 # Вспомогательные функции
 def token_required(f):
     @wraps(f)
@@ -400,7 +436,7 @@ def token_required(f):
         if not token:
             return {'error': 'Token is missing'}, 401
         
-        user_token = UserToken.query.filter_by(api_token=token).first()
+        user_token = UserToken.query.filter_by(access_token=token).first()
         if not user_token or user_token.expires_at < datetime.utcnow():
             return {'error': 'Invalid or expired token'}, 401
         
@@ -434,4 +470,5 @@ def generate_jwt(user_id):
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
