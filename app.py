@@ -62,9 +62,11 @@ def create_app():
     # Создание таблиц
     with app.app_context():
         db.create_all()
-    
-    return app
-    
+
+    @app.route('/api/test-endpoint')
+    def test_endpoint():
+        return jsonify({"status": "test OK"}), 200
+        
     @app.route('/api/get-test-token', methods=['GET'])
     def get_test_token():
         test_user = User(
@@ -77,6 +79,14 @@ def create_app():
     
     token = generate_jwt(test_user.id)
     return jsonify({"token": token})
+    
+    @app.route('/routes')
+    def list_routes():
+        return jsonify({
+            'routes': [str(rule) for rule in app.url_map.iter_rules()]
+        })
+        
+    return app
     
 def register_auth_routes(app):
     """Регистрация маршрутов аутентификации"""
@@ -165,34 +175,37 @@ def register_auth_routes(app):
             
         except requests.exceptions.RequestException as e:
             return jsonify({"error": f"OAuth error: {str(e)}"}), 500
+            
     @app.route('/api/get-test-token', methods=['GET'])
     def get_test_token():
-        # Проверяем, существует ли уже тестовый пользователь
-        user = User.query.filter_by(email="test@example.com").first()
-        
-        if not user:
-            # Создаем нового тестового пользователя
-            user = User(
-                email="test@example.com",
-                username="test_user"
+        try:
+            user = User.query.filter_by(email="test@example.com").first()
+            
+            if not user:
+                user = User(
+                    email="test@example.com",
+                    username="test_user"
+                )
+                user.set_password("12345")
+                db.session.add(user)
+                db.session.commit()
+            
+            token = generate_jwt(user.id)
+            
+            # Сохраняем токен
+            user_token = UserToken(
+                user_id=user.id,
+                api_token=token,
+                expires_at=datetime.utcnow() + timedelta(hours=1)
             )
-            user.set_password("12345")
-            db.session.add(user)
+            db.session.add(user_token)
             db.session.commit()
-        
-        # Генерируем токен
-        token = generate_jwt(user.id)
-        
-        # Сохраняем токен в базе (если используете UserToken)
-        user_token = UserToken(
-            user_id=user.id,
-            api_token=token,
-            expires_at=datetime.utcnow() + timedelta(hours=1)
-        db.session.add(user_token)
-        db.session.commit()
-        
-        return jsonify({"token": token})
-
+            
+            return jsonify({"token": token})
+            
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+            
 def register_user_routes(app):
     """Регистрация маршрутов для работы с пользователями"""
 
