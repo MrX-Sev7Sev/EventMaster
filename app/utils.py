@@ -1,5 +1,7 @@
 import re
-from flask import request
+from flask import request, jsonify
+from app.extensions import db
+from app.models import User 
 from app.exceptions import InvalidAPIUsage
 
 def validate_request(req, validation_rules):
@@ -39,3 +41,18 @@ def validate_request(req, validation_rules):
         raise InvalidAPIUsage("Validation failed", 400, {'errors': errors})
     
     return data
+@bp.route('/test-db')
+def test_db():
+    try:
+        # Попытка выполнить простой запрос
+        user_count = db.session.query(User).count()
+        return jsonify({
+            "status": "success",
+            "message": "Database connection works!",
+            "user_count": user_count
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
