@@ -50,6 +50,9 @@ def create_app():
             "allow_headers": ["Content-Type", "Authorization"]
         }
     })
+    @app.route('/api/test-db')
+    def test_db():
+        return jsonify({"status": "manual_endpoint_works"}), 200
     
     @app.route('/')  # ← Это главное!
     def hello():
