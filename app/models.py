@@ -26,7 +26,7 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
 class UserToken(db.Model):
-    __tablename__ = 'user_tokens'
+    __tablename__ = 'users_tokens'
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
