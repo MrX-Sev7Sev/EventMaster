@@ -1,7 +1,8 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, current_user
 from pydantic import ValidationError
-from app.models import db, User
+from app.models import User
+from app.extensions import db  # Новый импорт
 from app.schemas import User
 from app.utils import validate_request
 from app.exceptions import InvalidAPIUsage
