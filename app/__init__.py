@@ -8,8 +8,7 @@ from flask_jwt_extended import JWTManager
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask import Blueprint
-import os
-from .routes.data import data_bp 
+import os 
 from .extensions import db, mail, cors, jwt, login_manager
 
 # Инициализация расширений (без привязки к app)
