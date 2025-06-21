@@ -1,7 +1,7 @@
 from gevent import monkey
 monkey.patch_all()  # Должно быть первой строкой
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -12,7 +12,6 @@ import os
 from .extensions import db, mail, cors, jwt, login_manager
 
 # Инициализация расширений (без привязки к app)
-db = SQLAlchemy()
 cors = CORS()
 jwt = JWTManager()
 login_manager = LoginManager()
@@ -41,19 +40,32 @@ def create_app():
     mail.init_app(app)
 
     # CORS с конкретными настройками    
-    CORS(app, resources={
-        r"/api/*": {
-            "origins": [
-                "https://table-games.netlify.app",
-                "http://localhost:5173"  # Для разработки
-            ],
-            "methods": ["GET", "POST", "PUT", "DELETE"],
-            "allow_headers": ["Content-Type", "Authorization"]
-        }
-    })
+   ### CORS(app, resources={
+   #     r"/api/*": {
+   #         "origins": [
+    #            "https://table-games.netlify.app",
+     #           "http://localhost:5173"  # Для разработки
+      #      ],
+       #     "methods": ["GET", "POST", "PUT", "DELETE"],
+        #    "allow_headers": ["Content-Type", "Authorization"]
+       # }
+    #}) 
     @app.route('/api/test-db')
     def test_db():
-        return jsonify({"status": "manual_endpoint_works"}), 200
+        try:
+            from sqlalchemy import text
+            result = db.session.execute(text("SELECT 1")).scalar()
+            return jsonify({
+                "status": "success",
+                "db_connection": "OK",
+                "tables": db.engine.table_names()
+            }), 200
+        except Exception as e:
+            return jsonify({
+                "status": "error",
+                "error": str(e),
+                "type": type(e).__name__
+            }), 500
     
     @app.route('/')  # ← Это главное!
     def hello():
