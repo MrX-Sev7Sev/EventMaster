@@ -72,6 +72,7 @@ def signup():
 @auth_bp.route('/login', methods=['POST'])
 @cross_origin()
 def login():
+    data = request.get_json()
     if not validate_request(request.json, ['email', 'password']):
     return {"error": "Invalid data"}, 400
     try:
