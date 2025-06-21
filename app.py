@@ -1,8 +1,7 @@
-from flask import Flask, jsonify, request, url_for, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
 from datetime import datetime, timedelta
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail
@@ -10,8 +9,8 @@ import secrets
 from urllib.parse import urlencode
 import requests
 from functools import wraps
-from sqlalchemy.exc import SQLAlchemyError
 from config import Config
+import os
 
 # Инициализация расширений
 db = SQLAlchemy()
@@ -26,17 +25,20 @@ def create_app():
     db.init_app(app)
     mail.init_app(app)
     global serializer
-    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    serializer = URLSafeTimedSerializer(
+        app.config['SERIALIZER_SECRET_KEY'],
+        salt=app.config['SERIALIZER_SALT']
+    )
     
-    # Настройка CORS (единая точка)
+    # Настройка CORS
     CORS(
         app,
         resources={
             r"/api/*": {
                 "origins": app.config['CORS_ORIGINS'],
-                "supports_credentials": True,
-                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                "allow_headers": ["Content-Type", "Authorization"]
+                "supports_credentials": app.config['CORS_SUPPORTS_CREDENTIALS'],
+                "methods": app.config['CORS_METHODS'],
+                "allow_headers": app.config['CORS_ALLOW_HEADERS']
             }
         }
     )
@@ -47,8 +49,8 @@ def create_app():
         if request.path.startswith('/api/'):
             response.headers.add('Access-Control-Allow-Origin', ', '.join(app.config['CORS_ORIGINS']))
             response.headers.add('Access-Control-Allow-Credentials', 'true')
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+            response.headers.add('Access-Control-Allow-Headers', ', '.join(app.config['CORS_ALLOW_HEADERS']))
+            response.headers.add('Access-Control-Allow-Methods', ', '.join(app.config['CORS_METHODS']))
         return response
 
     # Регистрация маршрутов
@@ -62,7 +64,7 @@ def create_app():
         db.create_all()
     
     return app
-
+    
 def register_auth_routes(app):
     """Регистрация маршрутов аутентификации"""
     
