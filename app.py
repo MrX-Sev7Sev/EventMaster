@@ -65,6 +65,19 @@ def create_app():
     
     return app
     
+    @app.route('/api/get-test-token', methods=['GET'])
+    def get_test_token():
+        test_user = User(
+            email="test@example.com",
+            username="test_user"
+    )
+    test_user.set_password("12345")
+    db.session.add(test_user)
+    db.session.commit()
+    
+    token = generate_jwt(test_user.id)
+    return jsonify({"token": token})
+    
 def register_auth_routes(app):
     """Регистрация маршрутов аутентификации"""
     
