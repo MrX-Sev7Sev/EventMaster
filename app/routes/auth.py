@@ -16,10 +16,6 @@ CORS(auth_bp)
 def test():
     return "Works!", 200
 
-@auth_bp.route('/login', methods=['GET'])
-def login_test():
-    return "Сервер работает! Используйте POST для входа", 200
-
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
     """Регистрация нового пользователя"""
