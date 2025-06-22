@@ -18,7 +18,7 @@ def init_extensions(app):
     # Инициализация CORS с конфигом из app
     cors.init_app(app, resources={
         r"/api/*": {
-            "origins": app.config.get('CORS_ORIGINS', 'http://localhost:5173', 'https://table-games.netlify.app').split(','),
+            "origins": app.config.get('CORS_ORIGINS', 'http://localhost:5173, https://table-games.netlify.app').split(','),
             "supports_credentials": True,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
