@@ -1,4 +1,5 @@
 import sys
+import os
 print("!!! This is app.py !!! Current dir:", os.getcwd(), file=sys.stderr)
 print("!!! Files in directory:", os.listdir('.'), file=sys.stderr)
 
@@ -14,7 +15,7 @@ from urllib.parse import urlencode
 import requests
 from functools import wraps
 from config import config  # Импортируем исправленный config
-import os
+
 import logging
 
 # Инициализация расширений
