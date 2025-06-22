@@ -104,6 +104,15 @@ def create_app():
         from .models import User
         identity = jwt_data["sub"]
         return User.query.filter_by(id=identity).one_or_none()
+    @jwt.unauthorized_loader
+    def missing_token_callback(error):
+        app.logger.error(f"JWT Missing: {error}")
+        return jsonify({"error": "Требуется авторизация"}), 401
+    
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error):
+        app.logger.error(f"JWT Invalid: {error}")
+        return jsonify({"error": "Неверный токен"}), 401
     
     # Создание таблиц БД
     with app.app_context():
