@@ -16,12 +16,10 @@ class Config:
         db_url = os.getenv('DATABASE_URL')
         if db_url and db_url.startswith('postgres://'):
             # Для Render.com и подобных сервисов
-            db_url = db_url.replace('postgres://', 'postgresql://', 1)
-            if '.render.com' in db_url:
+            if db_url.startswith('postgres://'):
+                db_url = db_url.replace('postgres://', 'postgresql://', 1)
+            if '.onrender.com' in db_url:
                 db_url += '?sslmode=require'
-            self.SQLALCHEMY_DATABASE_URI = db_url
-        elif db_url:
-            # Если DATABASE_URL уже в правильном формате
             self.SQLALCHEMY_DATABASE_URI = db_url
         else:
             # Для локальной разработки
