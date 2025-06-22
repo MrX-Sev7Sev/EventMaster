@@ -4,24 +4,27 @@ from datetime import timedelta
 from urllib.parse import quote_plus
 
 class Config:
-    # Базовые настройки
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
-    FLASK_ENV = os.getenv('FLASK_ENV', 'production')
-    
-    # База данных
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_pre_ping': True,
-        'pool_recycle': 300,
-        'pool_size': 5,
-        'max_overflow': 10,
-        'connect_args': {
-            'sslmode': 'require'
+    def __init__(self):
+        # Базовые настройки
+        self.SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
+        self.FLASK_ENV = os.getenv('FLASK_ENV', 'production')
+        
+        # База данных
+        self.SQLALCHEMY_TRACK_MODIFICATIONS = False
+        self.SQLALCHEMY_ENGINE_OPTIONS = {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+            'pool_size': 5,
+            'max_overflow': 10,
+            'connect_args': {
+                'sslmode': 'require'
+            }
         }
-    }
-    
-    @property
-    def _database_url(self):
+        
+        # Вычисляем URL базы данных при инициализации
+        self.SQLALCHEMY_DATABASE_URI = self._get_database_url()
+
+       def _get_database_url(self):
         if db_url := os.getenv('DATABASE_URL'):
             db_url = db_url.replace('postgres://', 'postgresql://')
             if '.render.com' in db_url:
@@ -31,11 +34,10 @@ class Config:
                     db_url
                 )
             return db_url
-        
-        return f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:{quote_plus(os.getenv('POSTGRES_PASSWORD', ''))}@{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB', 'appdb')}"
 
+        return f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:{quote_plus(os.getenv('POSTGRES_PASSWORD', ''))}@{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB', 'appdb')}"
     # Явное свойство для SQLAlchemy
-    SQLALCHEMY_DATABASE_URI = _database_url
+
 
     # Остальные настройки...
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
