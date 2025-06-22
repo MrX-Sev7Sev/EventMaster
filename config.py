@@ -17,7 +17,7 @@ class Config:
             'pool_size': 5,
             'max_overflow': 10,
             'connect_args': {
-                'sslmode': 'require'
+                'sslmode': 'verify-full'
             }
         }
         
