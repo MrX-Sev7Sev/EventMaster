@@ -12,7 +12,16 @@ from config import config
 
 # Инициализация расширений
 db = SQLAlchemy()
-cors = CORS()
+cors = CORS(
+    resources={
+        r"/api/*": {
+            "origins": app.config['CORS_ORIGINS'].split(','),
+            "supports_credentials": True,
+            "methods": app.config['CORS_METHODS'],
+            "allow_headers": app.config['CORS_ALLOW_HEADERS']
+        }
+    }
+)
 jwt = JWTManager()
 login_manager = LoginManager()
 mail = Mail()
@@ -30,7 +39,10 @@ def create_app():
     jwt.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
-
+    
+    from flask_migrate import Migrate
+    migrate = Migrate(app, db)
+    
     @app.route('/api/test-db')
     def test_db():
         """Проверка подключения к базе данных"""
