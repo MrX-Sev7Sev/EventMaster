@@ -48,7 +48,7 @@ class Config:
         self.JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
         
         # Настройки CORS
-        self.CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173', 'https://table-games.netlify.app')
+        CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'https://table-games.netlify.app,http://localhost:5173')
 
 # Создаем экземпляр конфига
 config = Config()
