@@ -10,6 +10,7 @@ class Config:
         self.FLASK_ENV = os.getenv('FLASK_ENV', 'production')
         
         # База данных
+        self.SQLALCHEMY_DATABASE_URL = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a/urfutable?sslmode=require'
         self.SQLALCHEMY_TRACK_MODIFICATIONS = False
         self.SQLALCHEMY_ENGINE_OPTIONS = {
             'pool_pre_ping': True,
@@ -17,7 +18,7 @@ class Config:
             'pool_size': 5,
             'max_overflow': 10,
             'connect_args': {
-                'sslmode': 'verify-full'
+                'sslmode': 'require'
             }
         }
         
