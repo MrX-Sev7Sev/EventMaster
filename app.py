@@ -1,3 +1,7 @@
+import sys
+print("!!! This is app.py !!! Current dir:", os.getcwd(), file=sys.stderr)
+print("!!! Files in directory:", os.listdir('.'), file=sys.stderr)
+
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
@@ -428,8 +432,7 @@ def generate_jwt(user_id):
 
 app = create_app()
 
-def wsgi_app(environ, start_response):
-    return app(environ, start_response)
+application = app
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
