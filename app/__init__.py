@@ -39,6 +39,7 @@ def create_app():
     jwt.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
+    init_extensions(app)
     
     from flask_migrate import Migrate
     migrate = Migrate(app, db)
@@ -47,6 +48,9 @@ def create_app():
     def test_db():
         """Проверка подключения к базе данных"""
         try:
+            from sqlalchemy import text
+            from .extensions import db
+            
             result = db.session.execute(text("SELECT 1")).scalar()
             inspector = inspect(db.engine)
             tables = inspector.get_table_names()
