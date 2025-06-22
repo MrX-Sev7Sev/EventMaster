@@ -99,6 +99,12 @@ def create_app():
         logging.basicConfig(level=logging.INFO)
     
     # Инициализация расширений
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_mail import Mail
+
+    db = SQLAlchemy()
+    mail = Mail()
+
     db.init_app(app)
     mail.init_app(app)
     
