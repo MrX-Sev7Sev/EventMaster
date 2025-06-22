@@ -7,7 +7,6 @@ print(f"Files in directory: {os.listdir('.')}", file=sys.stderr)
 print(f"Python path: {sys.path}", file=sys.stderr)
 
 from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -56,6 +55,8 @@ class UserToken(db.Model):
 def create_app():
     app = Flask(__name__)
 
+    from flask_cors import CORS
+    
     @app.route('/health')
     def health_check():
         return jsonify({"status": "healthy", "database": "connected"}), 200
@@ -130,16 +131,28 @@ def create_app():
         salt=app.config['SERIALIZER_SALT']
     )
     
-    # Настройка CORS
+    # Настройка CORS с явным указанием всех необходимых параметров
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://localhost:5173", "https://table-games.netlify.app"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True
+            "origins": ["https://table-games.netlify.app", "http://localhost:5173"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+            "supports_credentials": True,
+            "expose_headers": ["Content-Type", "X-Total-Count"],
+            "max_age": 600
         }
     })
 
+    @app.before_request
+    def handle_options():
+        if request.method == "OPTIONS":
+            response = jsonify()
+            response.headers.add("Access-Control-Allow-Origin", "https://table-games.netlify.app")
+            response.headers.add("Access-Control-Allow-Headers", "*")
+            response.headers.add("Access-Control-Allow-Methods", "*")
+            response.headers.add("Access-Control-Allow-Credentials", "true")
+            return response
+    
     @app.route('/api/ping')
     def ping():
         return jsonify({"status": "ok", "message": "pong"})
