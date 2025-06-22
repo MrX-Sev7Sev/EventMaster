@@ -133,10 +133,10 @@ def create_app():
     # Настройка CORS
     CORS(app, resources={
         r"/api/*": {
-            "origins": app.config['CORS_ORIGINS'],
-            "supports_credentials": True,
+            "origins": ["http://localhost:5173", "https://table-games.netlify.app"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"]
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
         }
     })
 
