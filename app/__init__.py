@@ -85,15 +85,21 @@ def create_app():
     
     @app.route('/api/routes')
     def list_routes():
+        """Отладочный endpoint: показывает все зарегистрированные маршруты"""
         routes = []
         for rule in app.url_map.iter_rules():
-            if not rule.rule.startswith('/static/'):  # Исключает статические файлы
+            # Игнорируем статические пути и /api/routes сам себя
+            if not any([
+                rule.rule.startswith('/static/'),
+                rule.rule == '/api/routes',
+                'debugtoolbar' in rule.endpoint  # Если используете Flask-DebugToolbar
+            ]):
                 routes.append({
                     "endpoint": rule.endpoint,
-                    "path": str(rule),
-                    "methods": list(rule.methods)
+                    "path": rule.rule,
+                    "methods": sorted(list(rule.methods - {'HEAD', 'OPTIONS'}))
                 })
-        return jsonify(sorted(routes, key=lambda x: x['path']))
+        return jsonify({"routes": sorted(routes, key=lambda x: x['path'])})
 
     # 4. Настройка Flask-Login (после регистрации blueprints)
     @login_manager.user_loader
