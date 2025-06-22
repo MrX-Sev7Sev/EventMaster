@@ -56,7 +56,14 @@ def signup():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     try:
-        if not data.get("email") or not data.get("password"):
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Требуется JSON данные"}), 400
+
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
             return jsonify({"error": "Email и пароль обязательны"}), 400
 
         user = User.query.filter_by(email=email).first()
@@ -76,7 +83,7 @@ def login():
         return jsonify({"error": "Ошибка сервера"}), 500
 
 @auth_bp.route('/refresh', methods=['POST'])
-@jwt_required(refresh=True)  # Требуется refresh-токен
+@jwt_required(refresh=True)
 def refresh():
     current_user_id = get_jwt_identity()
     new_access_token = create_access_token(identity=current_user_id)
