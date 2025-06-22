@@ -35,6 +35,9 @@ def create_app():
         },
         'pool_pre_ping': True,    # Автоматическое восстановление соединений
         'pool_recycle': 300       # Переподключение каждые 5 минут
+        'connect_args': {
+            'sslmode': 'require'
+        }
     }
 
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'd2еlf43!kL_42$%k42Qwgaa1@fkEjd*daP2')
