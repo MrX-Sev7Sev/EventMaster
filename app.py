@@ -16,6 +16,7 @@ import logging
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.info("### APP STARTING ###")
 
 # Инициализация расширений
 db = SQLAlchemy()
@@ -112,6 +113,17 @@ def create_app():
     def ping():
         app.logger.info("Ping endpoint called")
         return jsonify({"status": "ok", "message": "pong"})
+    # Тестовый эндпоинт для диагностики
+    @app.route("/api/test")
+    def test():
+        return {
+            "status": "ok",
+            "routes": [str(rule) for rule in app.url_map.iter_rules()],
+            "env": {
+                "FLASK_ENV": os.getenv("FLASK_ENV"),
+                "DATABASE_URL": "OK" if os.getenv("DATABASE_URL") else "MISSING"
+            }
+        }
     
     return app
 
