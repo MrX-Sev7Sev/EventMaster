@@ -131,7 +131,7 @@ def register_blueprints(app):
     from app.routes.auth import auth_bp    # Уже имеет prefix='/api/auth'
     from app.routes.games import games_bp  # Уже имеет prefix='/api/games'
     from app.routes.users import users_bp  # Уже имеет prefix='/api/users'
-    from app.routes.data import data_bp    # Уже имеет prefix='/api/data'
+    from app.routes.data import data_bp, test_bp    # Уже имеет prefix='/api/data' # Импортируем оба blueprint из data.py
     from app.routes.test import test_bp    # Уже имеет prefix='/api/test'
 
     # Регистрация с явным указанием префиксов (если не заданы в самих blueprints)
