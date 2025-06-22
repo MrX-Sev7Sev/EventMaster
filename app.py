@@ -1,7 +1,10 @@
-import sys
 import os
-print("!!! This is app.py !!! Current dir:", os.getcwd(), file=sys.stderr)
-print("!!! Files in directory:", os.listdir('.'), file=sys.stderr)
+import sys
+
+print("=== DEBUG INFO ===", file=sys.stderr)
+print(f"Current directory: {os.getcwd()}", file=sys.stderr)
+print(f"Files in directory: {os.listdir('.')}", file=sys.stderr)
+print(f"Python path: {sys.path}", file=sys.stderr)
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -52,6 +55,10 @@ class UserToken(db.Model):
 
 def create_app():
     app = Flask(__name__)
+
+    @app.route('/')
+    def home():
+        return "Hello from Flask!"
 
     app.config.update(
         # Базовые настройки
