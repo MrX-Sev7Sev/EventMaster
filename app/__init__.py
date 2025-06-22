@@ -2,20 +2,9 @@ from gevent import monkey
 monkey.patch_all()  # Должно быть первой строкой
 
 from flask import Flask, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
-from flask_jwt_extended import JWTManager
-from flask_login import LoginManager
-from flask_mail import Mail
 from sqlalchemy import text, inspect
 from config import config
-
-# Инициализация расширений
-db = SQLAlchemy()
-cors = CORS()
-jwt = JWTManager()
-login_manager = LoginManager()
-mail = Mail()
+from .extensions import db, jwt, login_manager, migrate
 
 def create_app():
     """Фабрика для создания Flask-приложения"""
@@ -24,26 +13,17 @@ def create_app():
     # Загрузка конфигурации
     app.config.from_object(config)
     
-    # Инициализация расширений с приложением
     db.init_app(app)
-    cors.init_app(app)
-    jwt.init_app(app)
-    login_manager.init_app(app)
-    mail.init_app(app)
+    migrate.init_app(app, db)
     
     from .extensions import init_extensions
     init_extensions(app)
-    
-    from flask_migrate import Migrate
-    migrate = Migrate(app, db)
     
     @app.route('/api/test-db')
     def test_db():
         """Проверка подключения к базе данных"""
         try:
-            from sqlalchemy import text
             from .extensions import db
-            
             result = db.session.execute(text("SELECT 1")).scalar()
             inspector = inspect(db.engine)
             tables = inspector.get_table_names()
