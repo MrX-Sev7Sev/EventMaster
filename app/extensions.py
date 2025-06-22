@@ -15,11 +15,21 @@ migrate = Migrate()
 
 def init_extensions(app):
     """Инициализирует все расширения с приложением"""
+
+    # Инициализация CORS с конфигом из app
+    cors.init_app(app, resources={
+        r"/api/*": {
+            "origins": app.config.get('CORS_ORIGINS', 'http://localhost:5173').split(','),
+            "supports_credentials": True,
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
+        }
+    })
+        
     db.init_app(app)
     jwt.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
-    cors.init_app(app)
     migrate.init_app(app, db)
     
     # Настройки Flask-Login
