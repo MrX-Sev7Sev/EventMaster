@@ -27,20 +27,10 @@ class Config:
             )
         
         # Обязательные настройки SQLAlchemy
-        self.SQLALCHEMY_TRACK_MODIFICATIONS = False
-        self.SQLALCHEMY_ENGINE_OPTIONS = {
-            'pool_pre_ping': True,
-            'pool_recycle': 300,
-            'pool_size': 5,
-            'max_overflow': 10,
-            'connect_args': {
-                'connect_timeout': 5,
-                'keepalives': 1,
-                'keepalives_idle': 30,
-                'keepalives_interval': 10,
-                'keepalives_count': 5
-            }
-        }
+        self.CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'https://table-games.netlify.app,http://localhost:5173').split(',')
+        self.CORS_SUPPORTS_CREDENTIALS = True
+        self.CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
+        self.CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization', 'X-Requested-With']
 
         # JWT настройки
         self.JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', self.SECRET_KEY)
