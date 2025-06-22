@@ -8,7 +8,7 @@ from app.utils import validate_request
 from app.exceptions import InvalidAPIUsage
 
 # Сначала создаем Blueprint
-users_bp = Blueprint('users', __name__)
+users_bp = Blueprint('users', __name__, url_prefix='/api/users')
 
 # Затем используем его
 @users_bp.route('/me', methods=['GET'])
