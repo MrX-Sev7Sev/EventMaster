@@ -12,16 +12,7 @@ from config import config
 
 # Инициализация расширений
 db = SQLAlchemy()
-cors = CORS(
-    resources={
-        r"/api/*": {
-            "origins": app.config['CORS_ORIGINS'].split(','),
-            "supports_credentials": True,
-            "methods": app.config['CORS_METHODS'],
-            "allow_headers": app.config['CORS_ALLOW_HEADERS']
-        }
-    }
-)
+cors = CORS()
 jwt = JWTManager()
 login_manager = LoginManager()
 mail = Mail()
@@ -39,6 +30,8 @@ def create_app():
     jwt.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
+    
+    from .extensions import init_extensions
     init_extensions(app)
     
     from flask_migrate import Migrate
