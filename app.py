@@ -56,6 +56,10 @@ class UserToken(db.Model):
 def create_app():
     app = Flask(__name__)
 
+    @app.route('/health')
+    def health_check():
+        return jsonify({"status": "healthy", "database": "connected"}), 200
+        
     @app.route('/')
     def home():
         return "Hello from Flask!"
