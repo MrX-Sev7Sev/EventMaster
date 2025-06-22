@@ -48,9 +48,48 @@ class UserToken(db.Model):
 def create_app():
     app = Flask(__name__)
 
-    # Загрузка конфигурации
-    app.config.from_object(config)
-    
+    app.config.update(
+        # Базовые настройки
+        SECRET_KEY=config.SECRET_KEY,
+        FLASK_ENV=config.FLASK_ENV,
+        
+        # Настройки базы данных
+        SQLALCHEMY_DATABASE_URI=config.SQLALCHEMY_DATABASE_URI,
+        SQLALCHEMY_TRACK_MODIFICATIONS=config.SQLALCHEMY_TRACK_MODIFICATIONS,
+        SQLALCHEMY_ENGINE_OPTIONS=config.SQLALCHEMY_ENGINE_OPTIONS,
+        
+        # Настройки аутентификации
+        JWT_SECRET_KEY=config.JWT_SECRET_KEY,
+        JWT_ACCESS_TOKEN_EXPIRES=config.JWT_ACCESS_TOKEN_EXPIRES,
+        JWT_REFRESH_TOKEN_EXPIRES=config.JWT_REFRESH_TOKEN_EXPIRES,
+        
+        # Настройки CORS
+        CORS_ORIGINS=config.CORS_ORIGINS,
+        CORS_SUPPORTS_CREDENTIALS=config.CORS_SUPPORTS_CREDENTIALS,
+        CORS_METHODS=config.CORS_METHODS,
+        CORS_ALLOW_HEADERS=config.CORS_ALLOW_HEADERS,
+        
+        # Настройки почты
+        MAIL_SERVER=config.MAIL_SERVER,
+        MAIL_PORT=config.MAIL_PORT,
+        MAIL_USE_SSL=config.MAIL_USE_SSL,
+        MAIL_USERNAME=config.MAIL_USERNAME,
+        MAIL_PASSWORD=config.MAIL_PASSWORD,
+        MAIL_DEFAULT_SENDER=config.MAIL_DEFAULT_SENDER,
+        
+        # OAuth Mail.ru
+        MAIL_CLIENT_ID=config.MAIL_CLIENT_ID,
+        MAIL_CLIENT_SECRET=config.MAIL_CLIENT_SECRET,
+        MAIL_REDIRECT_URI=config.MAIL_REDIRECT_URI,
+        MAIL_AUTH_URL=config.MAIL_AUTH_URL,
+        MAIL_TOKEN_URL=config.MAIL_TOKEN_URL,
+        MAIL_USER_INFO_URL=config.MAIL_USER_INFO_URL,
+        
+        # Настройки сериализатора
+        SERIALIZER_SECRET_KEY=config.SERIALIZER_SECRET_KEY,
+        SERIALIZER_SALT=config.SERIALIZER_SALT
+    )
+
     # Настройка логирования
     if app.config['FLASK_ENV'] == 'production':
         gunicorn_logger = logging.getLogger('gunicorn.error')
