@@ -4,7 +4,11 @@ from .extensions import db
 from .models import User 
 from .exceptions import InvalidAPIUsage
 
-utils_bp = Blueprint('utils', __name__)
+utils_bp = Blueprint('utils', __name__, url_prefix='/api/utils')
+
+@utils_bp.route('/')
+def utils_root():
+    return jsonify({"status": "utils_works"}), 200
 
 def validate_request(req, validation_rules):
     """Валидация входящих данных"""
