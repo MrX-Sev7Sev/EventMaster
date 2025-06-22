@@ -52,7 +52,7 @@ class Config:
         self.JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
         # Настройки CORS
-        self.CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173,https://table-games.netlify.app').split(',')
+        self.CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173,https://eventmaster-0w4v.onrender.com')
         self.CORS_SUPPORTS_CREDENTIALS = True
         self.CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
         self.CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization']
