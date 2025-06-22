@@ -9,10 +9,9 @@ import secrets
 from urllib.parse import urlencode
 import requests
 from functools import wraps
-from config import config
+from config import config  # Импортируем исправленный config
 import os
 import logging
-import sys
 
 # Инициализация расширений
 db = SQLAlchemy()
@@ -48,6 +47,8 @@ class UserToken(db.Model):
 
 def create_app():
     app = Flask(__name__)
+
+    # Загрузка конфигурации
     app.config.from_object(config)
     
     # Настройка логирования
@@ -333,7 +334,7 @@ def create_app():
 
     # Создание таблиц
     with app.app_context():
-        db.create_all()
+        db.create_all(
         app.logger.info("Registered routes:")
         for rule in app.url_map.iter_rules():
             app.logger.info(f"{rule}")
