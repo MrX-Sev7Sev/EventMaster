@@ -8,6 +8,7 @@ from flask_jwt_extended import JWTManager
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask import Blueprint
+from app.routes import register_blueprints
 import os 
 from .extensions import db, mail, cors, jwt, login_manager
 
@@ -80,7 +81,6 @@ def create_app():
         return "Hello World (экстренная проверка)"
     
     # 3. Регистрация Blueprints (перенесено выше других настроек)
-    from app.routes import register_blueprints   
     register_blueprints(app)
     
     # 4. Настройка Flask-Login (после регистрации blueprints)
