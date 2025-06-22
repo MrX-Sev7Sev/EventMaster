@@ -21,11 +21,9 @@ class Config:
             }
         }
         
-        # Вычисляем URL базы данных при инициализации
-        self.SQLALCHEMY_DATABASE_URI = self._get_database_url()
-
-       def _get_database_url(self):
-        if db_url := os.getenv('DATABASE_URL'):
+        # Вычисляем URL базы данных
+        db_url = os.getenv('DATABASE_URL')
+        if db_url:
             db_url = db_url.replace('postgres://', 'postgresql://')
             if '.render.com' in db_url:
                 db_url = re.sub(
@@ -33,40 +31,45 @@ class Config:
                     r'postgresql://\1@\2',
                     db_url
                 )
-            return db_url
+            self.SQLALCHEMY_DATABASE_URI = db_url
+        else:
+            self.SQLALCHEMY_DATABASE_URI = (
+                f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:"
+                f"{quote_plus(os.getenv('POSTGRES_PASSWORD', ''))}@"
+                f"{os.getenv('POSTGRES_HOST', 'localhost')}:"
+                f"{os.getenv('POSTGRES_PORT', '5432')}/"
+                f"{os.getenv('POSTGRES_DB', 'appdb')}"
+            )
 
-        return f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:{quote_plus(os.getenv('POSTGRES_PASSWORD', ''))}@{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB', 'appdb')}"
-    # Явное свойство для SQLAlchemy
+        # Остальные настройки
+        self.JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', self.SECRET_KEY)
+        self.JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+        self.JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+        
+        self.CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173,https://table-games.netlify.app').split(',')
+        self.CORS_SUPPORTS_CREDENTIALS = True
+        self.CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+        self.CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization']
+        
+        self.MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.mail.ru')
+        self.MAIL_PORT = int(os.getenv('MAIL_PORT', 465))
+        self.MAIL_USE_SSL = os.getenv('MAIL_USE_SSL', 'true').lower() == 'true'
+        self.MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+        self.MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+        self.MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', self.MAIL_USERNAME)
+        
+        self.MAIL_CLIENT_ID = os.getenv('MAIL_OAUTH_CLIENT_ID', '890ea7b9c21d4fe98aeccd1a457dc9fc')
+        self.MAIL_CLIENT_SECRET = os.getenv('MAIL_OAUTH_CLIENT_SECRET', '19ef2f3739f1461d9adc5894ecfc0f13')
+        self.MAIL_REDIRECT_URI = os.getenv(
+            'MAIL_OAUTH_REDIRECT_URI',
+            'https://your-service.onrender.com/auth/mail/callback'
+        )
+        self.MAIL_AUTH_URL = 'https://oauth.mail.ru/login'
+        self.MAIL_TOKEN_URL = 'https://oauth.mail.ru/token'
+        self.MAIL_USER_INFO_URL = 'https://oauth.mail.ru/userinfo'
+        
+        self.SERIALIZER_SECRET_KEY = os.getenv('SERIALIZER_SECRET_KEY', self.SECRET_KEY)
+        self.SERIALIZER_SALT = os.getenv('SERIALIZER_SALT', 'email-confirm-salt')
 
-
-    # Остальные настройки...
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
-    
-    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173,https://table-games.netlify.app').split(',')
-    CORS_SUPPORTS_CREDENTIALS = True
-    CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-    CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization']
-    
-    MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.mail.ru')
-    MAIL_PORT = int(os.getenv('MAIL_PORT', 465))
-    MAIL_USE_SSL = os.getenv('MAIL_USE_SSL', 'true').lower() == 'true'
-    MAIL_USERNAME = os.getenv('MAIL_USERNAME')
-    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
-    MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
-    
-    MAIL_CLIENT_ID = os.getenv('MAIL_OAUTH_CLIENT_ID', '890ea7b9c21d4fe98aeccd1a457dc9fc')
-    MAIL_CLIENT_SECRET = os.getenv('MAIL_OAUTH_CLIENT_SECRET', '19ef2f3739f1461d9adc5894ecfc0f13')
-    MAIL_REDIRECT_URI = os.getenv(
-        'MAIL_OAUTH_REDIRECT_URI',
-        'https://your-service.onrender.com/auth/mail/callback'
-    )
-    MAIL_AUTH_URL = 'https://oauth.mail.ru/login'
-    MAIL_TOKEN_URL = 'https://oauth.mail.ru/token'
-    MAIL_USER_INFO_URL = 'https://oauth.mail.ru/userinfo'
-    
-    SERIALIZER_SECRET_KEY = os.getenv('SERIALIZER_SECRET_KEY', SECRET_KEY)
-    SERIALIZER_SALT = os.getenv('SERIALIZER_SALT', 'email-confirm-salt')
-
+# Создаем экземпляр конфига
 config = Config()
