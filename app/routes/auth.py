@@ -58,7 +58,7 @@ def login():
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"error": "Требуется JSON данные"}), 400
+            return jsonify({"error": "Требуется JSON"}), 400
 
         email = data.get('email')
         password = data.get('password')
@@ -67,8 +67,8 @@ def login():
             return jsonify({"error": "Email и пароль обязательны"}), 400
 
         user = User.query.filter_by(email=email).first()
-        if not user or not check_password_hash(user.password_hash, password):
-            return jsonify({"error": "Неверный email или пароль"}), 401
+        if not user or not user.check_password(password):
+            return jsonify({"error": "Неверные данные"}), 401
 
         access_token = create_access_token(identity=user.id)
         refresh_token = create_refresh_token(identity=user.id)
@@ -76,11 +76,15 @@ def login():
         return jsonify({
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "user_id": user.id
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username
+            }
         }), 200
 
     except Exception as e:
-        return jsonify({"error": "Ошибка сервера"}), 500
+        return jsonify({"error": str(e)}), 500
 
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
