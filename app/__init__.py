@@ -1,16 +1,18 @@
 from gevent import monkey
 monkey.patch_all()  # Должно быть первой строкой
 
+import os 
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from config import config
+from sqlalchemy import text, inspect
 from flask_jwt_extended import JWTManager
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask import Blueprint
 from app.routes import register_blueprints
-import os 
+
 from .extensions import db, mail, cors, jwt, login_manager
 
 # Инициализация расширений (без привязки к app)
@@ -27,10 +29,6 @@ def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
     app.config.from_object('config.Config')
-    app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'd2еlf43!kL_42$%k42Qwgaa1@fkEjd*daP2')
-
-    # Инициализация CORS
-    CORS(app)  # Автоматически возьмет настройки из config.py
 
     # 2. Инициализация расширений с приложением
     from .extensions import db, login_manager
@@ -41,14 +39,13 @@ def create_app():
     mail.init_app(app)
  
     @app.route('/api/test-db')
-    def test_db():
+    def test_db_connection():
+        """Тестовый endpoint для проверки подключения к БД"""
         try:
-            from sqlalchemy import text, inspect
-            
-            # 1. Проверяем подключение
+            # Проверка подключения
             result = db.session.execute(text("SELECT 1")).scalar()
             
-            # 2. Получаем список таблиц (совместимый с SQLAlchemy 2.0+)
+            # Получение списка таблиц
             inspector = inspect(db.engine)
             tables = inspector.get_table_names()
             
@@ -65,9 +62,10 @@ def create_app():
                 "type": type(e).__name__
             }), 500
     
-    @app.route('/')  # ← Это главное!
-    def hello():
-        return "Hello World (экстренная проверка)"
+    @app.route('/')
+    def home():
+        """Корневой endpoint для проверки работы сервера"""
+        return "Welcome to EventMaster API", 200
     
     # 3. Регистрация Blueprints (перенесено выше других настроек)
     register_blueprints(app)
