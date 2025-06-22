@@ -8,6 +8,10 @@ from app.exceptions import InvalidAPIUsage
 
 games_bp = Blueprint('games', __name__, url_prefix='/api/games')
 
+@games_bp.route('/', methods=['GET'])
+def get_games():
+    return jsonify({"games": []}), 200
+
 @games_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_game():
