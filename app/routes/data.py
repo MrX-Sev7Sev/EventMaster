@@ -6,11 +6,11 @@ import logging
 data_bp = Blueprint('data', __name__, url_prefix='/api/data')
 test_bp = Blueprint('test', __name__, url_prefix='/api/test')
 
-@data_bp.route('/data')
+@data_bp.route('/')
 def get_data():
     return jsonify({"status": "success"})
 
-@test_bp.route('/test-db')
+@test_bp.route('/db')
 def test_db():
     try:
         # 1. Проверяем подключение к БД
