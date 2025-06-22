@@ -131,16 +131,15 @@ def register_blueprints(app):
     from app.routes.auth import auth_bp    # Уже имеет prefix='/api/auth'
     from app.routes.games import games_bp  # Уже имеет prefix='/api/games'
     from app.routes.users import users_bp  # Уже имеет prefix='/api/users'
-    from app.routes.data import data_bp, test_bp    # Уже имеет prefix='/api/data' # Импортируем оба blueprint из data.py
-    from app.routes.test import test_bp    # Уже имеет prefix='/api/test'
+    from app.routes.data import data_bp, test_bp  # Оба blueprint из data.py
 
-    # Регистрация с явным указанием префиксов (если не заданы в самих blueprints)
+    # Регистрация с явным указанием префиксов
     app.register_blueprint(utils_bp, url_prefix='/api/utils')
-    app.register_blueprint(data_bp)    # Префикс уже задан в data.py
-    app.register_blueprint(auth_bp)    # Префикс уже задан в auth.py
-    app.register_blueprint(games_bp)   # Префикс уже задан в games.py
-    app.register_blueprint(users_bp)   # Префикс уже задан в users.py
-    app.register_blueprint(test_bp)    # Префикс уже задан в test.py
+    app.register_blueprint(data_bp)    # Префикс '/api/data' задан в data.py
+    app.register_blueprint(test_bp)    # Префикс '/api/test' задан в data.py
+    app.register_blueprint(auth_bp)    # Префикс '/api/auth' задан в auth.py
+    app.register_blueprint(games_bp)   # Префикс '/api/games' задан в games.py
+    app.register_blueprint(users_bp)   # Префикс '/api/users' задан в users.py
 
 # WSGI-совместимый объект
 app = create_app()
