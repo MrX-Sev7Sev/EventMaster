@@ -4,6 +4,7 @@ monkey.patch_all()  # Должно быть первой строкой
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from config import config
 from flask_jwt_extended import JWTManager
 from flask_login import LoginManager
 from flask_mail import Mail
@@ -25,23 +26,12 @@ def home():
 def create_app():
     """Фабрика для создания Flask-приложения"""
     app = Flask(__name__)
-    
-    # 1. Загрузка конфигурации
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://mrx:2IAsjs5oOfdEgB2pacpqdPZbhaMOmFN1@dpg-d1aj6jmmcj7s73fjkdu0-a/urfutable?sslmode=require'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'connect_args': {
-            'sslmode': 'require'  # Обязательно для Render PostgreSQL
-        },
-        'pool_pre_ping': True,    # Автоматическое восстановление соединений
-        'pool_recycle': 300       # Переподключение каждые 5 минут
-        'connect_args': {
-            'sslmode': 'require'
-        }
-    }
-
-    app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'd2еlf43!kL_42$%k42Qwgaa1@fkEjd*daP2')
     app.config.from_object('config.Config')
+    app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'd2еlf43!kL_42$%k42Qwgaa1@fkEjd*daP2')
+
+    # Инициализация CORS
+    CORS(app)  # Автоматически возьмет настройки из config.py
+
     # 2. Инициализация расширений с приложением
     from .extensions import db, login_manager
     db.init_app(app)
@@ -49,18 +39,7 @@ def create_app():
     jwt.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
-
-    # CORS с конкретными настройками    
-   ### CORS(app, resources={
-   #     r"/api/*": {
-   #         "origins": [
-    #            "https://table-games.netlify.app",
-     #           "http://localhost:5173"  # Для разработки
-      #      ],
-       #     "methods": ["GET", "POST", "PUT", "DELETE"],
-        #    "allow_headers": ["Content-Type", "Authorization"]
-       # }
-    #}) 
+ 
     @app.route('/api/test-db')
     def test_db():
         try:
