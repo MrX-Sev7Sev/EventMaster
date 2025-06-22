@@ -11,7 +11,10 @@ from app.exceptions import InvalidAPIUsage
 users_bp = Blueprint('users', __name__, url_prefix='/api/users')
 
 # Затем используем его
-@users_bp.route('/me', methods=['GET'])
+@users_bp.route('/', methods=['GET'])
+def list_users():
+    return jsonify({"users": []}), 200
+
 @jwt_required()
 def get_current_user():
     from app.models import User  # Ленивый импорт чтобы избежать цикла
