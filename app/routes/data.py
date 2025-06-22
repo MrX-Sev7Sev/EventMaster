@@ -6,6 +6,10 @@ import logging
 data_bp = Blueprint('data', __name__, url_prefix='/api/data')
 test_bp = Blueprint('test', __name__, url_prefix='/api/test')
 
+@test_bp.route('/')  # Добавьте этот endpoint
+def test():
+    return jsonify({"status": "test_works"}), 200
+
 @data_bp.route('/')
 def get_data():
     return jsonify({"status": "success"})
