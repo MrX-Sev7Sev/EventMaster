@@ -5,6 +5,10 @@ from urllib.parse import quote_plus
 class Config:
     def __init__(self):
         # Базовые настройки
+        if 'RENDER' in os.environ:
+            self.SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'].replace(
+                'postgres://', 'postgresql://', 1
+            ) + '?sslmode=require'
         self.SECRET_KEY = os.getenv('SECRET_KEY')
         self.FLASK_ENV = os.getenv('FLASK_ENV', 'production')
         
