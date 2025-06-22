@@ -10,11 +10,14 @@ class Config:
         
         # Настройки базы данных
         db_url = os.getenv('DATABASE_URL')
-        if db_url:
-            # Для Render.com
-            db_url = db_url.replace('postgres://', 'postgresql://')
+        if db_url and db_url.startswith('postgres://'):
+            # Для Render.com и подобных сервисов
+            db_url = db_url.replace('postgres://', 'postgresql://', 1)
             if '.render.com' in db_url:
                 db_url += '?sslmode=require'
+            self.SQLALCHEMY_DATABASE_URI = db_url
+        elif db_url:
+            # Если DATABASE_URL уже в правильном формате
             self.SQLALCHEMY_DATABASE_URI = db_url
         else:
             # Для локальной разработки
@@ -25,6 +28,10 @@ class Config:
                 f"{os.getenv('POSTGRES_PORT', '5432')}/"
                 f"{os.getenv('POSTGRES_DB', 'appdb')}"
             )
+        
+        # Убедимся, что URI установлен
+        if not hasattr(self, 'SQLALCHEMY_DATABASE_URI'):
+            raise ValueError("Database URI configuration is missing")
         
         self.SQLALCHEMY_TRACK_MODIFICATIONS = False
         self.SQLALCHEMY_ENGINE_OPTIONS = {
@@ -57,4 +64,9 @@ class Config:
         self.MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', self.MAIL_USERNAME)
 
 # Создаем экземпляр конфига
-config = Config()
+try:
+    config = Config()
+except ValueError as e:
+    print(f"Configuration error: {e}")
+    # Здесь вы можете добавить логику для аварийного завершения или использования значений по умолчанию
+    raise
