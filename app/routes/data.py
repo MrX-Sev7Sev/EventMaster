@@ -3,8 +3,8 @@ from app.extensions import db
 from sqlalchemy import text, inspect
 import logging
 
-data_bp = Blueprint('data', __name__, url_prefix='/api')
-test_bp = Blueprint('test', __name__, url_prefix='/api')
+data_bp = Blueprint('data', __name__, url_prefix='/api/data')
+test_bp = Blueprint('test', __name__, url_prefix='/api/test')
 
 @data_bp.route('/data')
 def get_data():
