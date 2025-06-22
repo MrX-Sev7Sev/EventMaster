@@ -13,10 +13,17 @@ from config import Config
 import os
 import logging
 
-# Настройка логирования
+# Экстренное логирование
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.info("### APP STARTING ###")
+logger.info("### НАЧАЛО ЗАГРУЗКИ ###")
+
+try:
+    from config import Config
+    logger.info("Config загружен")
+except ImportError as e:
+    logger.error(f"ОШИБКА ИМПОРТА: {str(e)}")
+    sys.exit(1)
 
 # Инициализация расширений
 db = SQLAlchemy()
@@ -51,7 +58,52 @@ class UserToken(db.Model):
     refresh_token = db.Column(db.String(500))
 
 def create_app():
-    app = Flask(__name__)
+    try:
+        logger.info("1. Начало создания приложения")
+        
+        app = Flask(__name__)
+        logger.info("2. Flask-приложение создано")
+
+        app.config.from_object(Config)
+        logger.info("3. Конфиг загружен")
+
+        # Инициализация расширений
+        db.init_app(app)
+        mail.init_app(app)
+        logger.info("4. Расширения инициализированы")
+
+        # Настройка CORS
+        CORS(app, resources={r"/api/*": {"origins": app.config['CORS_ORIGINS']}})
+        
+        # Тестовый маршрут
+        @app.route("/api/test")
+        def test():
+            return {"status": "ok"}
+
+        # Регистрация всех маршрутов
+        register_auth_routes(app)
+        register_user_routes(app)
+        register_game_routes(app)
+        register_utility_routes(app)
+
+        # Создание таблиц
+        with app.app_context():
+            db.create_all()
+            logger.info("5. Таблицы БД созданы")
+
+        logger.info("=== ЗАРЕГИСТРИРОВАННЫЕ МАРШРУТЫ ===")
+        for rule in app.url_map.iter_rules():
+            logger.info(f"{rule}")
+            
+        return app  # Важно! Возвращаем app здесь
+
+    except Exception as e:
+        logger.error(f"ФАТАЛЬНАЯ ОШИБКА: {str(e)}", exc_info=True)
+        sys.exit(1)
+
+# Точка входа
+app = create_app()
+
     app.config.from_object(Config)
     
     # Настройка логирования для Render
@@ -481,6 +533,5 @@ def generate_jwt(user_id):
     return f"generated-jwt-for-{user_id}"
 
 if __name__ == '__main__':
-    app = create_app()
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port)
