@@ -428,8 +428,8 @@ def generate_jwt(user_id):
 
 app = create_app()
 
-def wsgi_app():
-    return app
+def wsgi_app(environ, start_response):
+    return app(environ, start_response)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
