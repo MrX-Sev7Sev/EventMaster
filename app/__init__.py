@@ -91,10 +91,6 @@ def create_app():
         app.logger.error(f"JWT Invalid: {error}")
         return jsonify({"error": "Неверный токен"}), 401
     
-    # Создание таблиц БД
-    with app.app_context():
-        db.create_all()
-    
     return app
 
 def register_blueprints(app):
