@@ -83,6 +83,18 @@ def create_app():
     # 3. Регистрация Blueprints (перенесено выше других настроек)
     register_blueprints(app)
     
+    @app.route('/api/routes')
+    def list_routes():
+        routes = []
+        for rule in app.url_map.iter_rules():
+            if not rule.rule.startswith('/static/'):  # Исключает статические файлы
+                routes.append({
+                    "endpoint": rule.endpoint,
+                    "path": str(rule),
+                    "methods": list(rule.methods)
+                })
+        return jsonify(sorted(routes, key=lambda x: x['path']))
+
     # 4. Настройка Flask-Login (после регистрации blueprints)
     @login_manager.user_loader
     def load_user(user_id):
@@ -107,21 +119,22 @@ def create_app():
     return app
 
 def register_blueprints(app):
-    """Регистрация всех Blueprint в приложении"""
-    # Ленивые импорты внутри функции
-    from .utils import utils_bp
-    from .routes.data import data_bp
-    from app.routes.auth import auth_bp
-    from app.routes.games import games_bp
-    from app.routes.users import users_bp
-    from .routes.test import test_bp  
-    
-    app.register_blueprint(utils_bp, url_prefix='/api')
-    app.register_blueprint(data_bp)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(games_bp)
-    app.register_blueprint(users_bp)
-    app.register_blueprint(test_bp)
+    """Регистрация всех Blueprint с явным контролем префиксов"""
+    # Импортируем все blueprints
+    from .utils import utils_bp  # Префикс задается только здесь
+    from app.routes.auth import auth_bp    # Уже имеет prefix='/api/auth'
+    from app.routes.games import games_bp  # Уже имеет prefix='/api/games'
+    from app.routes.users import users_bp  # Уже имеет prefix='/api/users'
+    from app.routes.data import data_bp    # Уже имеет prefix='/api/data'
+    from app.routes.test import test_bp    # Уже имеет prefix='/api/test'
+
+    # Регистрация с явным указанием префиксов (если не заданы в самих blueprints)
+    app.register_blueprint(utils_bp, url_prefix='/api/utils')
+    app.register_blueprint(data_bp)    # Префикс уже задан в data.py
+    app.register_blueprint(auth_bp)    # Префикс уже задан в auth.py
+    app.register_blueprint(games_bp)   # Префикс уже задан в games.py
+    app.register_blueprint(users_bp)   # Префикс уже задан в users.py
+    app.register_blueprint(test_bp)    # Префикс уже задан в test.py
 
 # WSGI-совместимый объект
 app = create_app()
